@@ -191,7 +191,7 @@ async function allVersionRecords(maxPages) {
   return records;
 }
 
-async function buildNodes() {
+async function buildNodes({ onSnapshot } = {}) {
   const retrievedAt = new Date().toISOString().slice(0, 10);
   const parts = parseList(process.env.ECFR_PARTS, "1-53,201-253,5301-5352");
   const includeCurrent = process.env.ECFR_INCLUDE_CURRENT !== "false";
@@ -202,12 +202,16 @@ async function buildNodes() {
   const nodes = [];
   const skipped = [];
 
+  async function recordSnapshot(snapshot) {
+    nodes.push(...snapshot.nodes);
+    if (snapshot.error) skipped.push(snapshot.error);
+    if (snapshot.nodes.length && onSnapshot) await onSnapshot(snapshot.nodes);
+  }
+
   if (includeCurrent) {
     const currentDate = await ecfrCurrentDate();
     for (const part of parts) {
-      const snapshot = await fetchPartSnapshot({ part, date: currentDate, retrievedAt, snapshotType: "current" });
-      nodes.push(...snapshot.nodes);
-      if (snapshot.error) skipped.push(snapshot.error);
+      await recordSnapshot(await fetchPartSnapshot({ part, date: currentDate, retrievedAt, snapshotType: "current" }));
     }
   }
 
@@ -223,14 +227,14 @@ async function buildNodes() {
     const uniqueSnapshots = Array.from(new Map(snapshots.map((item) => [`${item.part}|${item.date}`, item])).values())
       .slice(0, maxHistorySnapshots);
     for (const snapshot of uniqueSnapshots) {
-      const parsedSnapshot = await fetchPartSnapshot({
-        part: snapshot.part,
-        date: snapshot.date,
-        retrievedAt,
-        snapshotType: "historical"
-      });
-      nodes.push(...parsedSnapshot.nodes);
-      if (parsedSnapshot.error) skipped.push(parsedSnapshot.error);
+      await recordSnapshot(
+        await fetchPartSnapshot({
+          part: snapshot.part,
+          date: snapshot.date,
+          retrievedAt,
+          snapshotType: "historical"
+        })
+      );
     }
   }
 
@@ -279,6 +283,118 @@ async function ensureSchema(client) {
   `);
 }
 
+async function insertNodes(client, nodes) {
+  for (const node of nodes) {
+    await client.query(
+      `insert into ecfr_nodes (
+        id, citation, title, type, part, regime, source_url, retrieved_at,
+        effective_date, snapshot_date, snapshot_type, excerpt, body_text, metadata, updated_at
+      ) values (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14, now()
+      )
+      on conflict (id) do update set
+        citation = excluded.citation,
+        title = excluded.title,
+        type = excluded.type,
+        part = excluded.part,
+        regime = excluded.regime,
+        source_url = excluded.source_url,
+        retrieved_at = excluded.retrieved_at,
+        effective_date = excluded.effective_date,
+        snapshot_date = excluded.snapshot_date,
+        snapshot_type = excluded.snapshot_type,
+        excerpt = excluded.excerpt,
+        body_text = excluded.body_text,
+        metadata = excluded.metadata,
+        updated_at = now()`,
+      [
+        node.id,
+        node.citation,
+        node.title,
+        node.type,
+        node.part,
+        node.regime,
+        node.sourceUrl,
+        node.retrievedAt,
+        node.effectiveDate,
+        node.snapshotDate,
+        node.snapshotType,
+        node.excerpt,
+        node.bodyText,
+        JSON.stringify(node.metadata)
+      ]
+    );
+  }
+}
+
+async function createDatabaseWriter() {
+  if (!process.env.DATABASE_URL || process.env.ECFR_INCREMENTAL_DATABASE === "false") return null;
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL.includes("sslmode=require") ? undefined : { rejectUnauthorized: false }
+  });
+  const client = await pool.connect();
+  let nodeCount = 0;
+  let closed = false;
+  const run = { id: null };
+  try {
+    await ensureSchema(client);
+    const result = await client.query(
+      "insert into source_refresh_runs (source, details) values ($1, $2) returning id",
+      ["ecfr", JSON.stringify({ mode: "incremental" })]
+    );
+    run.id = result.rows[0].id;
+  } catch (error) {
+    client.release();
+    await pool.end();
+    throw error;
+  }
+
+  return {
+    async writeNodes(nodes) {
+      await client.query("begin");
+      try {
+        await insertNodes(client, nodes);
+        await client.query("commit");
+      } catch (error) {
+        await client.query("rollback").catch(() => {});
+        throw error;
+      }
+      nodeCount += nodes.length;
+      await client.query("update source_refresh_runs set node_count = $1 where id = $2", [nodeCount, run.id]);
+    },
+    async complete(cache) {
+      await client.query(
+        "update source_refresh_runs set completed_at = now(), status = $1, node_count = $2, details = $3 where id = $4",
+        [
+          "complete",
+          nodeCount,
+          JSON.stringify({
+            mode: "incremental",
+            generatedAt: cache.generatedAt,
+            skippedCount: cache.skippedCount,
+            skipped: cache.skipped
+          }),
+          run.id
+        ]
+      );
+    },
+    async fail(error) {
+      await client.query(
+        "update source_refresh_runs set completed_at = now(), status = $1, node_count = $2, details = $3 where id = $4",
+        ["failed", nodeCount, JSON.stringify({ mode: "incremental", error: String(error?.message || error) }), run.id]
+      ).catch(() => {});
+    },
+    async close() {
+      if (closed) return;
+      closed = true;
+      client.release();
+      await pool.end();
+    }
+  };
+}
+
 async function writeToDatabase(cache) {
   if (!process.env.DATABASE_URL) return false;
   const pool = new pg.Pool({
@@ -295,48 +411,7 @@ async function writeToDatabase(cache) {
     );
     runId = run.rows[0].id;
     await client.query("begin");
-    for (const node of cache.nodes) {
-      await client.query(
-        `insert into ecfr_nodes (
-          id, citation, title, type, part, regime, source_url, retrieved_at,
-          effective_date, snapshot_date, snapshot_type, excerpt, body_text, metadata, updated_at
-        ) values (
-          $1, $2, $3, $4, $5, $6, $7, $8,
-          $9, $10, $11, $12, $13, $14, now()
-        )
-        on conflict (id) do update set
-          citation = excluded.citation,
-          title = excluded.title,
-          type = excluded.type,
-          part = excluded.part,
-          regime = excluded.regime,
-          source_url = excluded.source_url,
-          retrieved_at = excluded.retrieved_at,
-          effective_date = excluded.effective_date,
-          snapshot_date = excluded.snapshot_date,
-          snapshot_type = excluded.snapshot_type,
-          excerpt = excluded.excerpt,
-          body_text = excluded.body_text,
-          metadata = excluded.metadata,
-          updated_at = now()`,
-        [
-          node.id,
-          node.citation,
-          node.title,
-          node.type,
-          node.part,
-          node.regime,
-          node.sourceUrl,
-          node.retrievedAt,
-          node.effectiveDate,
-          node.snapshotDate,
-          node.snapshotType,
-          node.excerpt,
-          node.bodyText,
-          JSON.stringify(node.metadata)
-        ]
-      );
-    }
+    await insertNodes(client, cache.nodes);
     await client.query("commit");
     await client.query(
       "update source_refresh_runs set completed_at = now(), status = $1, node_count = $2 where id = $3",
@@ -365,12 +440,30 @@ async function writeJson(cache) {
   return true;
 }
 
-const cache = await buildNodes();
-if (!cache.nodes.length && process.env.ECFR_ALLOW_EMPTY !== "true") {
-  throw new Error("eCFR refresh produced zero nodes. Upstream XML may be unavailable; set ECFR_ALLOW_EMPTY=true only for diagnostics.");
+const databaseWriter = await createDatabaseWriter();
+let cache;
+let databaseWritten = false;
+let jsonWritten = false;
+try {
+  cache = await buildNodes({
+    onSnapshot: databaseWriter ? (nodes) => databaseWriter.writeNodes(nodes) : null
+  });
+  if (!cache.nodes.length && process.env.ECFR_ALLOW_EMPTY !== "true") {
+    throw new Error("eCFR refresh produced zero nodes. Upstream XML may be unavailable; set ECFR_ALLOW_EMPTY=true only for diagnostics.");
+  }
+  if (databaseWriter) {
+    await databaseWriter.complete(cache);
+    databaseWritten = true;
+  } else {
+    databaseWritten = await writeToDatabase(cache);
+  }
+  jsonWritten = await writeJson(cache);
+} catch (error) {
+  if (databaseWriter) await databaseWriter.fail(error);
+  throw error;
+} finally {
+  if (databaseWriter) await databaseWriter.close();
 }
-const databaseWritten = await writeToDatabase(cache);
-const jsonWritten = await writeJson(cache);
 
 console.log(
   JSON.stringify(
