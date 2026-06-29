@@ -1,0 +1,19 @@
+{
+  "name": "clausefinder-showcase",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm --prefix wayan.com/clause-finder run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix wayan.com/clause-finder run build",
+    "preview": "npm --prefix wayan.com/clause-finder run preview",
+    "index:far": "npm --prefix backend run index:far",
+    "test:backend": "npm --prefix backend test"
+  },
+  "workspaces": [
+    "backend",
+    "wayan.com/clause-finder"
+  ]
+}

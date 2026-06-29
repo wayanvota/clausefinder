@@ -1,0 +1,15 @@
+{
+  "name": "@wayan/clause-finder-backend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "index:far": "node scripts/build-far-index.mjs",
+    "test": "node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

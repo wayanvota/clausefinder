@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.*
+qa/
+tmp/
+*.log
+
+# Legacy single-app prototype files kept locally but not part of the showcase repo.
+/src/
+/source-cache/
+/design/
+/index.html
+/vite.config.js
