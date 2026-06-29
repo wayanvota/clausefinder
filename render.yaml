@@ -16,6 +16,14 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4.1-mini
+      - key: DATABASE_URL
+        sync: false
+      - key: ECFR_HISTORY_LOOKBACK_DAYS
+        value: "365"
+      - key: ECFR_MAX_HISTORY_SNAPSHOTS
+        value: "120"
+      - key: ECFR_WRITE_JSON
+        value: "false"
 
   - type: web
     name: wayan-clause-finder

@@ -11,6 +11,7 @@
     "preview": "npm --prefix wayan.com/clause-finder run preview",
     "index:sources": "npm --prefix backend run index:far",
     "index:far": "npm run index:sources",
+    "refresh:ecfr-cache": "npm --prefix backend run refresh:ecfr-cache",
     "test:backend": "npm --prefix backend test"
   },
   "workspaces": [

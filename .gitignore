@@ -6,6 +6,7 @@ dist/
 qa/
 tmp/
 *.log
+backend/data/ecfr-cache.json
 
 # Legacy single-app prototype files kept locally but not part of the showcase repo.
 /src/
