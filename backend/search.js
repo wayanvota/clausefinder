@@ -291,18 +291,46 @@ function bm25(node, queryTokens, index) {
   return score;
 }
 
-function citationHitScore(node, queryCitations) {
+function hasPrescriptionUseCue(query) {
+  return /as prescribed in/i.test(String(query || "")) && /use the following (clause|provision)/i.test(String(query || ""));
+}
+
+function citationHitScore(node, queryCitations, query) {
   if (!queryCitations.length) return 0;
   let score = 0;
+  const prescribedClauseCue = hasPrescriptionUseCue(query) && /clause|provision/i.test(String(node.type || ""));
   for (const queryCitation of queryCitations) {
     if (node.citationKey === queryCitation) score = Math.max(score, 1);
     else if (node.citationKey.startsWith(queryCitation) || queryCitation.startsWith(node.citationKey)) {
       score = Math.max(score, 0.82);
     } else if (node.relatedCitationKeys?.includes(queryCitation)) {
-      score = Math.max(score, 0.55);
+      score = Math.max(score, prescribedClauseCue ? 1.08 : 0.55);
     }
   }
   return score;
+}
+
+function normalizedPhrase(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function titleCueBoost(node, query) {
+  const rawTitle = String(node.title || "").toLowerCase().replace(/[.:;\s]+$/g, "").trim();
+  const rawQuery = String(query || "").toLowerCase();
+  if (rawTitle.length >= 24 && new RegExp(`\\b${escapeRegex(rawTitle)}\\s*[.:;]`).test(rawQuery)) {
+    return 10;
+  }
+  const title = normalizedPhrase(node.title);
+  if (title.length < 24) return 0;
+  return normalizedPhrase(query).includes(title) ? 2 : 0;
 }
 
 function domainBoost(node, query, context) {
@@ -363,10 +391,10 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
   const queryCitations = extractCitations(trimmed);
   const rawScores = index.nodes.map((node) => {
     const lexical = bm25(node, queryTokens, index);
-    const citationScore = citationHitScore(node, queryCitations);
+    const citationScore = citationHitScore(node, queryCitations, trimmed);
     const ctx = contextBoost(node, inferredContext);
     const phrase = node.bodyText.toLowerCase().includes(trimmed.toLowerCase()) ? 0.5 : 0;
-    const composite = lexical + citationScore * 18 + ctx.score + phrase + domainBoost(node, trimmed, inferredContext);
+    const composite = lexical + citationScore * 18 + ctx.score + phrase + titleCueBoost(node, trimmed) + domainBoost(node, trimmed, inferredContext);
     return { node, lexical, citationScore, contextScore: ctx.score, contextReasons: ctx.reasons, composite };
   });
   const max = Math.max(...rawScores.map((item) => item.composite), 1);
