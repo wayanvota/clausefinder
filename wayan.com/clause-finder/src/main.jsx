@@ -708,6 +708,14 @@ function App() {
       setNoMatchReason(payload.noMatchReason || "");
       setSelectedId(payload.results?.[0]?.id || "");
       setAnswer(payload.answer || null);
+      if (payload.totalNodes) {
+        setMeta((currentMeta) => currentMeta || {
+          totalNodes: payload.totalNodes,
+          generatedAt: payload.generatedAt,
+          sourceBaseUrl: payload.sourceBaseUrl,
+          parts: []
+        });
+      }
     } catch (searchError) {
       setError(String(searchError.message || searchError));
     } finally {
