@@ -332,27 +332,37 @@ async function createDatabaseWriter() {
   if (!process.env.DATABASE_URL || process.env.ECFR_INCREMENTAL_DATABASE === "false") return null;
   const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL.includes("sslmode=require") ? undefined : { rejectUnauthorized: false }
+    ssl: process.env.DATABASE_URL.includes("sslmode=require") ? undefined : { rejectUnauthorized: false },
+    max: 2,
+    idleTimeoutMillis: 5000
   });
-  const client = await pool.connect();
   let nodeCount = 0;
   let closed = false;
   const run = { id: null };
+  pool.on("error", (error) => {
+    console.warn(`Neon idle connection closed during refresh: ${error?.message || error}`);
+  });
+
   try {
-    await ensureSchema(client);
-    const result = await client.query(
+    const client = await pool.connect();
+    try {
+      await ensureSchema(client);
+    } finally {
+      client.release();
+    }
+    const result = await pool.query(
       "insert into source_refresh_runs (source, details) values ($1, $2) returning id",
       ["ecfr", JSON.stringify({ mode: "incremental" })]
     );
     run.id = result.rows[0].id;
   } catch (error) {
-    client.release();
     await pool.end();
     throw error;
   }
 
   return {
     async writeNodes(nodes) {
+      const client = await pool.connect();
       await client.query("begin");
       try {
         await insertNodes(client, nodes);
@@ -360,12 +370,14 @@ async function createDatabaseWriter() {
       } catch (error) {
         await client.query("rollback").catch(() => {});
         throw error;
+      } finally {
+        client.release();
       }
       nodeCount += nodes.length;
-      await client.query("update source_refresh_runs set node_count = $1 where id = $2", [nodeCount, run.id]);
+      await pool.query("update source_refresh_runs set node_count = $1 where id = $2", [nodeCount, run.id]);
     },
     async complete(cache) {
-      await client.query(
+      await pool.query(
         "update source_refresh_runs set completed_at = now(), status = $1, node_count = $2, details = $3 where id = $4",
         [
           "complete",
@@ -381,7 +393,7 @@ async function createDatabaseWriter() {
       );
     },
     async fail(error) {
-      await client.query(
+      await pool.query(
         "update source_refresh_runs set completed_at = now(), status = $1, node_count = $2, details = $3 where id = $4",
         ["failed", nodeCount, JSON.stringify({ mode: "incremental", error: String(error?.message || error) }), run.id]
       ).catch(() => {});
@@ -389,7 +401,6 @@ async function createDatabaseWriter() {
     async close() {
       if (closed) return;
       closed = true;
-      client.release();
       await pool.end();
     }
   };
