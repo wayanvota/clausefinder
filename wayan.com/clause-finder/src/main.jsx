@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { contextDefaults, contextOptions, examples } from "./data";
+import { contextOptions, examples } from "./data";
 import "./styles.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -80,7 +80,7 @@ function Header({ activePage, setActivePage, meta, onExport }) {
         ))}
       </nav>
       <div className="header-actions">
-        <span>{meta?.totalNodes ? `${meta.totalNodes.toLocaleString()} FAR nodes` : "Loading corpus"}</span>
+        <span>{meta?.totalNodes ? `${meta.totalNodes.toLocaleString()} indexed nodes` : "Loading corpus"}</span>
         <button className="secondary-button" type="button" onClick={onExport}>
           Export session
         </button>
@@ -93,7 +93,7 @@ function GuardrailStrip() {
   return (
     <section className="guardrail-strip" aria-label="Guardrails">
       <strong>Decision support only</strong>
-      <span>Public regulatory text only</span>
+      <span>Public regulatory sources only</span>
       <span>No compliance verdicts</span>
       <span>Every result links to Acquisition.gov</span>
     </section>
@@ -105,16 +105,18 @@ function IntakePanel({
   setQuestion,
   context,
   setContext,
+  onClarify,
   onSearch,
   onExample,
   sensitiveHits,
-  loading
+  loading,
+  clarifying
 }) {
   return (
     <aside className="panel intake-panel">
       <div className="panel-title">
         <span>Question and context</span>
-        <small>Search public FAR text</small>
+        <small>Search public acquisition rules</small>
       </div>
 
       <label className="question-box">
@@ -159,11 +161,11 @@ function IntakePanel({
       </div>
 
       <div className="button-row">
-        <button className="primary-button" type="button" onClick={onSearch} disabled={loading}>
-          {loading ? "Searching" : "Find FAR clauses"}
+        <button className="primary-button" type="button" onClick={onClarify} disabled={loading || clarifying}>
+          {clarifying ? "Checking facts" : "Start clause search"}
         </button>
-        <button className="secondary-button" type="button" onClick={() => setContext(contextDefaults)}>
-          Reset context
+        <button className="secondary-button" type="button" onClick={onSearch} disabled={loading || clarifying}>
+          {loading ? "Searching" : "Search now"}
         </button>
       </div>
 
@@ -176,6 +178,44 @@ function IntakePanel({
         ))}
       </div>
     </aside>
+  );
+}
+
+function ClarifyPanel({ questions, answers, setAnswers, onSearch, onClear, note }) {
+  if (!questions.length) return null;
+  return (
+    <section className="panel clarify-panel">
+      <div className="panel-title">
+        <span>Clarifying questions</span>
+        <small>{note || "Answer what you know, or skip."}</small>
+      </div>
+      <div className="clarify-grid">
+        {questions.map((question) => (
+          <label className="clarify-question" key={question.id}>
+            <strong>{question.label}</strong>
+            <span>{question.why}</span>
+            <select
+              value={answers[question.id] || "Not sure"}
+              onChange={(event) => setAnswers({ ...answers, [question.id]: event.target.value })}
+            >
+              {(question.options || ["Not sure"]).map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+      <div className="button-row clarify-actions">
+        <button className="primary-button" type="button" onClick={onSearch}>
+          Search with answers
+        </button>
+        <button className="secondary-button" type="button" onClick={onClear}>
+          Hide questions
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -217,7 +257,7 @@ function ResultCard({ result, index, selected, onSelect, feedback, setFeedback }
           </div>
           <p className="risk-line">Why this might not apply: {result.mightNotApply}</p>
           <a href={result.sourceUrl} target="_blank" rel="noreferrer">
-            Acquisition.gov source
+            Source
           </a>
         </div>
       </button>
@@ -266,13 +306,42 @@ function ResultsPanel({ results, selectedId, setSelectedId, feedback, setFeedbac
       ) : (
         <div className="no-match">
           <h2>No confident candidate yet.</h2>
-          <p>{noMatchReason || "Enter a question and search the FAR index."}</p>
+          <p>{noMatchReason || "Enter a question and search the acquisition-rule index."}</p>
           <a href="https://www.acquisition.gov/search-regulations" target="_blank" rel="noreferrer">
             Manual Acquisition.gov search
           </a>
         </div>
       )}
     </main>
+  );
+}
+
+function AnswerPanel({ answer }) {
+  if (!answer) return null;
+  return (
+    <section className="panel answer-panel">
+      <div className="panel-title">
+        <span>Grounded summary</span>
+        <small>Generated only from retrieved candidates</small>
+      </div>
+      <p>{answer.summary}</p>
+      {Array.isArray(answer.bestFitCitations) && answer.bestFitCitations.length > 0 && (
+        <div className="version-row">
+          {answer.bestFitCitations.map((citation) => (
+            <span className="version" key={citation}>
+              {citation}
+            </span>
+          ))}
+        </div>
+      )}
+      {Array.isArray(answer.caveats) && answer.caveats.length > 0 && (
+        <ul>
+          {answer.caveats.map((caveat) => (
+            <li key={caveat}>{caveat}</li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -352,13 +421,13 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
 
       {tab === "Text" && (
         <section className="detail-section">
-          <h3>Indexed FAR text</h3>
+          <h3>Indexed source text</h3>
           <p>{truncate(result.bodyText || result.excerpt, 1500)}</p>
           <h3>Source provenance</h3>
           <p>
             Retrieved {result.retrievedAt || "from index"} from{" "}
             <a href={result.sourceUrl} target="_blank" rel="noreferrer">
-              Acquisition.gov
+              public source
             </a>
             .
           </p>
@@ -433,18 +502,18 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
 function AboutPage() {
   return (
     <main className="page-panel">
-      <h2>ClauseFinder is a public FAR search tool, not a legal answer machine.</h2>
+      <h2>ClauseFinder is a public acquisition-rule search tool, not a legal answer machine.</h2>
       <p>
         It was built by Wayan Vota as a showcase for acquisition AI that makes
-        uncertainty visible. The tool searches indexed public FAR text, ranks
-        candidate authorities, links back to Acquisition.gov, and keeps the
-        human verification step in the workflow.
+        uncertainty visible. The tool searches indexed public FAR, DFARS,
+        DAFFARS, FAR Overhaul, Federal Register, and eCFR-history signals,
+        ranks candidate authorities, links back to public source pages, and
+        keeps the human verification step in the workflow.
       </p>
       <p>
         The strongest use case is first-pass orientation: a contracting officer,
         reviewer, journalist, or policy analyst can paste a plain-language
-        acquisition question and quickly find likely FAR sections or clauses to
-        inspect.
+        acquisition question and quickly find likely sections or clauses to inspect.
       </p>
     </main>
   );
@@ -455,16 +524,19 @@ function MethodPage({ meta }) {
     <main className="page-panel">
       <h2>How the search works</h2>
       <p>
-        The backend fetches public FAR part pages from Acquisition.gov, extracts
-        sections, provisions, and clauses into a JSON index, then scores user
-        queries with a lexical ranking method plus context boosts for buying
-        type, commerciality, thresholds, competition, funding layer, and urgency.
+        The backend fetches public FAR, DFARS, DAFFARS, FAR Overhaul, Federal
+        Register proposed-rule, and eCFR Title 48 version metadata sources,
+        extracts retrievable nodes into a JSON index, then scores user queries
+        with lexical ranking plus context boosts for buying type, commerciality,
+        thresholds, competition, funding layer, and urgency.
       </p>
       <p>
         The current index contains {meta?.totalNodes?.toLocaleString() || "loading"} nodes.
-        It does not yet include full DFARS, DAFFARS, eCFR point-in-time history,
-        or the complete FAR overhaul deviation corpus. Those are the next
-        accuracy upgrades before any operational use.
+        The OpenAI API asks clarifying questions and writes a grounded summary
+        only from retrieved candidates. eCFR coverage is currently version
+        metadata, not full historical text snapshots, and FAR Overhaul deviation
+        extraction still needs a reviewer-grade text pipeline before operational
+        use.
       </p>
     </main>
   );
@@ -475,16 +547,15 @@ function SourcesPage({ meta }) {
     <main className="page-panel">
       <h2>Sources and deployment notes</h2>
       <p>
-        The searchable corpus is generated from{" "}
-        <a href="https://www.acquisition.gov/far" target="_blank" rel="noreferrer">
-          Acquisition.gov FAR pages
-        </a>
-        . Every candidate result links back to its public source page.
+        The searchable corpus is generated from Acquisition.gov FAR, DFARS,
+        DAFFARS, and FAR Overhaul pages, Federal Register proposed-rule metadata,
+        and eCFR Title 48 version metadata. Every candidate result links back to
+        its public source page when the source provides one.
       </p>
       <div className="source-grid">
         {(meta?.parts || []).map((part) => (
           <a href={part.url} target="_blank" rel="noreferrer" key={part.part}>
-            <strong>FAR Part {part.part}</strong>
+            <strong>{part.regime || "Source"} {part.part}</strong>
             <span>{part.nodes} indexed nodes</span>
             <small>{part.url}</small>
           </a>
@@ -505,9 +576,17 @@ function ToolPage({
   setSelectedId,
   feedback,
   setFeedback,
+  answer,
+  questions,
+  answers,
+  setAnswers,
+  clarifyNote,
+  onClarify,
+  clearQuestions,
   onSearch,
   onExample,
   loading,
+  clarifying,
   error,
   noMatchReason,
   responseContext
@@ -521,10 +600,12 @@ function ToolPage({
           setQuestion={setQuestion}
           context={context}
           setContext={setContext}
+          onClarify={onClarify}
           onSearch={onSearch}
           onExample={onExample}
           sensitiveHits={sensitiveHits}
           loading={loading}
+          clarifying={clarifying}
         />
         <ResultsPanel
           results={results}
@@ -542,6 +623,15 @@ function ToolPage({
           setFeedback={setFeedback}
         />
       </div>
+      <ClarifyPanel
+        questions={questions}
+        answers={answers}
+        setAnswers={setAnswers}
+        onSearch={onSearch}
+        onClear={clearQuestions}
+        note={clarifyNote}
+      />
+      <AnswerPanel answer={answer} />
     </>
   );
 }
@@ -557,8 +647,13 @@ function App() {
   const [feedback, setFeedbackState] = useState({});
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [clarifying, setClarifying] = useState(false);
   const [error, setError] = useState("");
   const [noMatchReason, setNoMatchReason] = useState("");
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [clarifyNote, setClarifyNote] = useState("");
+  const [answer, setAnswer] = useState(null);
 
   const selected = results.find((result) => result.id === selectedId) || results[0];
 
@@ -569,18 +664,48 @@ function App() {
     }));
   }
 
-  async function runSearch(nextQuestion = question, nextContext = context) {
+  function contextWithAnswers(base = context) {
+    const merged = { ...base };
+    for (const [key, value] of Object.entries(answers)) {
+      if (value && value !== "Not sure") merged[key] = value;
+    }
+    return merged;
+  }
+
+  async function runClarify() {
+    setClarifying(true);
+    setError("");
+    try {
+      const payload = await apiJson("/api/clarify", {
+        method: "POST",
+        body: JSON.stringify({ query: question, context })
+      });
+      setContext(payload.context || context);
+      setQuestions(payload.questions || []);
+      setClarifyNote(payload.note || "");
+      if (payload.readyToSearch || !payload.questions?.length) {
+        await runSearch(question, payload.context || context);
+      }
+    } catch (clarifyError) {
+      setError(String(clarifyError.message || clarifyError));
+    } finally {
+      setClarifying(false);
+    }
+  }
+
+  async function runSearch(nextQuestion = question, nextContext = contextWithAnswers()) {
     setLoading(true);
     setError("");
     try {
       const payload = await apiJson("/api/search", {
         method: "POST",
-        body: JSON.stringify({ query: nextQuestion, context: nextContext, limit: 8 })
+        body: JSON.stringify({ query: nextQuestion, context: nextContext, limit: 8, includeAnswer: true })
       });
       setResults(payload.results || []);
       setResponseContext(payload.context || nextContext);
       setNoMatchReason(payload.noMatchReason || "");
       setSelectedId(payload.results?.[0]?.id || "");
+      setAnswer(payload.answer || null);
     } catch (searchError) {
       setError(String(searchError.message || searchError));
     } finally {
@@ -591,6 +716,9 @@ function App() {
   function onExample(example) {
     setQuestion(example.question);
     setContext(example.context);
+    setQuestions([]);
+    setAnswers({});
+    setAnswer(null);
     setActivePage("tool");
     runSearch(example.question, example.context);
   }
@@ -636,9 +764,17 @@ function App() {
           setSelectedId={setSelectedId}
           feedback={feedback}
           setFeedback={setFeedback}
-          onSearch={() => runSearch()}
+          answer={answer}
+          questions={questions}
+          answers={answers}
+          setAnswers={setAnswers}
+          clarifyNote={clarifyNote}
+          onClarify={runClarify}
+          clearQuestions={() => setQuestions([])}
+          onSearch={() => runSearch(question, contextWithAnswers())}
           onExample={onExample}
           loading={loading}
+          clarifying={clarifying}
           error={error}
           noMatchReason={noMatchReason}
           responseContext={responseContext}
@@ -657,4 +793,6 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+const rootNode = document.getElementById("root");
+rootNode.__clauseFinderRoot = rootNode.__clauseFinderRoot || createRoot(rootNode);
+rootNode.__clauseFinderRoot.render(<App />);

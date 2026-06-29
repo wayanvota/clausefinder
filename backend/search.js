@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { groundedAnswer } from "./openai.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = process.env.FAR_INDEX_PATH || join(__dirname, "data", "far-index.json");
@@ -223,7 +224,7 @@ function plainReason(result, queryTokens, contextReasons) {
     : `Ranked by context and related FAR language.${context}`;
 }
 
-export async function searchFar({ query, context = {}, limit = 8 }) {
+export async function searchFar({ query, context = {}, limit = 8, includeAnswer = true }) {
   const trimmed = String(query || "").trim();
   const inferredContext = inferContext(trimmed, context);
   const sensitiveHits = detectSensitive(trimmed);
@@ -292,21 +293,22 @@ export async function searchFar({ query, context = {}, limit = 8 }) {
         versions: [
           {
             label: "current",
-            date: item.node.effectiveDate || "current Acquisition.gov text",
-            note: "Current public FAR text from Acquisition.gov.",
+            date: item.node.effectiveDate || "current indexed source",
+            note: `Current indexed ${item.node.regime || "regulatory"} source.`,
             sourceUrl: item.node.sourceUrl
           }
         ],
         related: item.node.related || [],
         supplementChain: [
-          { label: item.node.citation, status: "FAR source", url: item.node.sourceUrl },
-          { label: "DFARS", status: "Search separately in next build", url: "https://www.acquisition.gov/dfars" },
-          { label: "DAFFARS", status: "Search separately in next build", url: "https://www.acquisition.gov/daffars" }
+          { label: item.node.citation, status: `${item.node.regime || "Source"} hit`, url: item.node.sourceUrl },
+          { label: "FAR", status: "Indexed", url: "https://www.acquisition.gov/far" },
+          { label: "DFARS", status: "Indexed", url: "https://www.acquisition.gov/dfars" },
+          { label: "DAFFARS", status: "Indexed", url: "https://www.acquisition.gov/daffars" }
         ]
       };
     });
 
-  return {
+  const response = {
     query: trimmed,
     context: inferredContext,
     sensitiveHits,
@@ -316,6 +318,10 @@ export async function searchFar({ query, context = {}, limit = 8 }) {
     results,
     noMatchReason: results.length ? "" : "No candidate authority crossed the search threshold."
   };
+  response.answer = includeAnswer
+    ? await groundedAnswer({ query: trimmed, context: inferredContext, results })
+    : null;
+  return response;
 }
 
 export async function getMeta() {

@@ -1,8 +1,12 @@
 import http from "node:http";
 import { searchFar, getMeta } from "./search.js";
+import { loadEnvFile } from "./env.js";
+import { clarifyQuestion } from "./openai.js";
 
 const PORT = Number(process.env.PORT || 8787);
+const HOST = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "*";
+loadEnvFile();
 
 function sendJson(res, status, payload) {
   res.writeHead(status, {
@@ -31,6 +35,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/api/meta") {
       return sendJson(res, 200, await getMeta());
     }
+    if (req.method === "POST" && url.pathname === "/api/clarify") {
+      const body = await readJson(req);
+      return sendJson(res, 200, await clarifyQuestion(body));
+    }
     if (req.method === "POST" && url.pathname === "/api/search") {
       const body = await readJson(req);
       return sendJson(res, 200, await searchFar(body));
@@ -44,6 +52,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`ClauseFinder backend listening on ${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`ClauseFinder backend listening on ${HOST}:${PORT}`);
 });

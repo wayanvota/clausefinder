@@ -9,7 +9,8 @@
     "dev:backend": "npm --prefix backend run dev",
     "build": "npm --prefix wayan.com/clause-finder run build",
     "preview": "npm --prefix wayan.com/clause-finder run preview",
-    "index:far": "npm --prefix backend run index:far",
+    "index:sources": "npm --prefix backend run index:far",
+    "index:far": "npm run index:sources",
     "test:backend": "npm --prefix backend test"
   },
   "workspaces": [

@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = join(__dirname, "..", "data", "far-index.json");
-const BASE_URL = "https://www.acquisition.gov/far";
+const ACQ_BASE = "https://www.acquisition.gov";
+const FAR_BASE = `${ACQ_BASE}/far`;
 
 const ENTITY_MAP = {
   amp: "&",
@@ -39,6 +40,120 @@ function stripHtml(html) {
   );
 }
 
+async function fetchText(url, as = "text") {
+  const res = await fetch(url, {
+    headers: { "user-agent": "ClauseFinder public acquisition regulation indexer; contact: wayan.com" }
+  });
+  if (!res.ok) throw new Error(`Failed ${url}: ${res.status}`);
+  return as === "json" ? res.json() : res.text();
+}
+
+function titleFromArticle(article, citation) {
+  const match =
+    article.match(/<h[1-6][^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/h[1-6]>/i) ||
+    article.match(/<span class="ph autonumber">[\s\S]*?<\/span>\s*([^<]+)/i);
+  const title = stripHtml(match?.[1] || "").replace(new RegExp(`^${citation}\\s*`), "").trim();
+  return title || citation;
+}
+
+function typeFromArticle(article, dataPart, citation) {
+  if (/class="[^"]*\bclause\b/i.test(article)) return "clause";
+  if (/class="[^"]*\bprovision\b/i.test(article)) return "provision";
+  if (/^52\.\d+-/.test(citation) || /^252\.\d+-/.test(citation) || /^5352\.\d+-/.test(citation)) {
+    return "clause/provision";
+  }
+  return dataPart || "section";
+}
+
+function prescriptionFromText(text) {
+  const match = text.match(/As prescribed in ([^.]{1,260}\.)/i);
+  return match ? `As prescribed in ${match[1]}` : "";
+}
+
+function relatedFromArticle(article) {
+  const links = [...article.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)];
+  const seen = new Set();
+  return links
+    .map(([, href, label]) => {
+      const clean = stripHtml(label);
+      if (!clean || seen.has(`${clean}-${href}`)) return null;
+      seen.add(`${clean}-${href}`);
+      return {
+        label: clean.slice(0, 90),
+        url: href.startsWith("http") ? href : `${ACQ_BASE}${href}`,
+        relation: "cross-reference"
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function extractEffectiveDate(html) {
+  const text = stripHtml(html);
+  const match = text.match(/Effective Date:\s*([0-9/.-]+)/i);
+  return match?.[1] || "";
+}
+
+function parseRegulationPage({ html, part, partUrl, regime, retrievedAt }) {
+  const effectiveDate = extractEffectiveDate(html);
+  let starts = [...html.matchAll(/<article\b[^>]*id="([^"]+)"[^>]*data-part="([^"]+)"[^>]*data-part-number="([^"]+)"/gi)].map(
+    (match) => ({
+      index: match.index || 0,
+      id: match[1],
+      dataPart: match[2],
+      citation: match[3]
+    })
+  );
+  if (!starts.length) {
+    starts = [...html.matchAll(/<article\b[^>]*id="([^"]+)"[^>]*>[\s\S]{0,1200}?<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi)].map(
+      (match) => {
+        const heading = stripHtml(match[2]);
+        const citation =
+          heading.match(/^(?:Part|Subpart)\s+([0-9.]+)/i)?.[1] ||
+          heading.match(/^([0-9]{1,4}\.[0-9][0-9A-Za-z.-]*)/)?.[1] ||
+          "";
+        const dataPart = /^Subpart/i.test(heading) ? "subpart" : /^Part/i.test(heading) ? "part" : "section";
+        return {
+          index: match.index || 0,
+          id: match[1],
+          dataPart,
+          citation
+        };
+      }
+    );
+  }
+  const nodes = [];
+  for (let i = 0; i < starts.length; i += 1) {
+    const start = starts[i];
+    if (!/^\d+(\.\d+)?(-\d+)?$/.test(start.citation)) continue;
+    if (start.dataPart === "part" || start.dataPart === "subpart") continue;
+    const end = starts[i + 1]?.index || html.length;
+    const article = html.slice(start.index, end);
+    const text = stripHtml(article);
+    if (text.length < 80 || /\[Reserved\]$/.test(titleFromArticle(article, start.citation))) continue;
+    const title = titleFromArticle(article, start.citation);
+    const type = typeFromArticle(article, start.dataPart, start.citation);
+    const bodyText = text.replace(new RegExp(`^${start.citation}\\s*`), "");
+    nodes.push({
+      id: `${regime.toLowerCase().replace(/\s+/g, "-")}-${start.citation.replace(/\./g, "-").replace(/[^a-z0-9-]/gi, "-").toLowerCase()}`,
+      citation: start.citation,
+      title,
+      type,
+      part,
+      regime,
+      hierarchyPath: `${regime} > Part ${part} > ${start.citation}`,
+      sourceUrl: `${partUrl}#${start.id}`,
+      retrievedAt,
+      effectiveDate,
+      excerpt: bodyText.slice(0, 520),
+      bodyText: bodyText.slice(0, 12000),
+      prescription: prescriptionFromText(bodyText),
+      related: relatedFromArticle(article)
+    });
+  }
+  return nodes;
+}
+
 function partListFromArgs() {
   const arg = process.argv.find((item) => item.startsWith("--parts="));
   const raw = arg ? arg.split("=")[1] : process.env.FAR_PARTS || "1-53";
@@ -54,131 +169,178 @@ function partListFromArgs() {
   return [...new Set(parts.filter(Boolean))].sort((a, b) => a - b);
 }
 
-function sourceUrlForCitation(citation, part) {
-  const anchor = citation.replace(/\./g, "_").replace(/-/g, "_");
-  if (/^\d+\.\d/.test(citation) && !citation.startsWith("52.")) {
-    return `${BASE_URL}/${citation}`;
+async function indexFar(retrievedAt) {
+  const nodes = [];
+  const parts = [];
+  for (const part of partListFromArgs()) {
+    const url = `${FAR_BASE}/part-${part}`;
+    const html = await fetchText(url);
+    const partNodes = parseRegulationPage({ html, part, partUrl: url, regime: "FAR", retrievedAt });
+    parts.push({ regime: "FAR", part, url, nodes: partNodes.length });
+    nodes.push(...partNodes);
+    console.log(`Indexed FAR Part ${part}: ${partNodes.length} nodes`);
   }
-  if (citation.startsWith("52.")) {
-    return `${BASE_URL}/${citation}`;
+  return { nodes, parts };
+}
+
+async function discoverAcquisitionGovParts(indexUrl, hrefPrefix) {
+  const html = await fetchText(indexUrl);
+  const links = [...html.matchAll(/<a href="([^"]+)"[^>]*title="([^"]*Part\s+(\d+)[^"]*)"[^>]*>/gi)]
+    .map(([, href, title, part]) => ({
+      href: href.startsWith("http") ? href : `${ACQ_BASE}${href}`,
+      title: stripHtml(title),
+      part: Number(part)
+    }))
+    .filter((item) => item.href.includes(hrefPrefix));
+  return Array.from(new Map(links.map((item) => [item.href, item])).values());
+}
+
+async function indexAcquisitionGovRegime({ regime, indexUrl, hrefPrefix, retrievedAt }) {
+  const nodes = [];
+  const parts = [];
+  const links = await discoverAcquisitionGovParts(indexUrl, hrefPrefix);
+  for (const link of links) {
+    const html = await fetchText(link.href);
+    const partNodes = parseRegulationPage({
+      html,
+      part: link.part,
+      partUrl: link.href,
+      regime,
+      retrievedAt
+    });
+    parts.push({ regime, part: link.part, url: link.href, nodes: partNodes.length });
+    nodes.push(...partNodes);
+    console.log(`Indexed ${regime} Part ${link.part}: ${partNodes.length} nodes`);
   }
-  return `${BASE_URL}/part-${part}#FAR_${anchor}`;
+  return { nodes, parts };
 }
 
-function titleFromArticle(article, citation) {
-  const match =
-    article.match(/<h[1-6][^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/h[1-6]>/i) ||
-    article.match(/<span class="ph autonumber">[\s\S]*?<\/span>\s*([^<]+)/i);
-  const title = stripHtml(match?.[1] || "").replace(new RegExp(`^${citation}\\s*`), "").trim();
-  return title || citation;
+async function indexFederalRegister(retrievedAt) {
+  const url =
+    "https://www.federalregister.gov/api/v1/documents.json?per_page=100&conditions%5Btype%5D%5B%5D=PRORULE&conditions%5Bterm%5D=Federal%20Acquisition%20Regulation%20Revolutionary";
+  const data = await fetchText(url, "json");
+  const results = data.results || [];
+  const nodes = results.map((doc) => ({
+    id: `federal-register-${doc.document_number}`,
+    citation: doc.citation || doc.document_number,
+    title: doc.title,
+    type: "proposed rule",
+    part: "",
+    regime: "Federal Register proposed rule",
+    hierarchyPath: `Federal Register > ${doc.type} > ${doc.document_number}`,
+    sourceUrl: doc.html_url || doc.pdf_url,
+    retrievedAt,
+    effectiveDate: doc.publication_date || "",
+    excerpt: `${doc.abstract || ""} Comment date: ${doc.comments_close_on || "not listed"}`.slice(0, 520),
+    bodyText: `${doc.title}\n${doc.abstract || ""}\n${doc.raw_text_url || ""}`.slice(0, 12000),
+    prescription: "",
+    related: []
+  }));
+  console.log(`Indexed Federal Register proposed rules: ${nodes.length} nodes`);
+  return {
+    nodes,
+    parts: [{ regime: "Federal Register proposed rule", part: "proposed", url, nodes: nodes.length }]
+  };
 }
 
-function typeFromArticle(article, dataPart, citation) {
-  if (/class="[^"]*\bclause\b/i.test(article)) return "clause";
-  if (/class="[^"]*\bprovision\b/i.test(article)) return "provision";
-  if (citation.startsWith("52.") && citation.includes("-")) return "clause/provision";
-  return dataPart || "section";
-}
-
-function prescriptionFromText(text) {
-  const match = text.match(/As prescribed in ([^.]{1,260}\.)/i);
-  return match ? `As prescribed in ${match[1]}` : "";
-}
-
-function relatedFromArticle(article) {
-  const links = [...article.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)];
-  const seen = new Set();
-  return links
-    .map(([, href, label]) => {
+async function indexFarOverhaul(retrievedAt) {
+  const url = `${ACQ_BASE}/far-overhaul`;
+  const html = await fetchText(url);
+  const text = stripHtml(html);
+  const linkNodes = [...html.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)]
+    .map(([, href, label], index) => {
       const clean = stripHtml(label);
-      if (!clean || seen.has(clean)) return null;
-      seen.add(clean);
+      if (!clean || !/FAR|deviation|companion|overhaul|part/i.test(clean)) return null;
+      const sourceUrl = href.startsWith("http") ? href : `${ACQ_BASE}${href}`;
       return {
-        label: clean.slice(0, 80),
-        url: href.startsWith("http") ? href : `https://www.acquisition.gov${href}`,
-        relation: "cross-reference"
+        id: `far-overhaul-${index}`,
+        citation: clean.slice(0, 80),
+        title: clean,
+        type: "overhaul source",
+        part: "",
+        regime: "FAR Overhaul",
+        hierarchyPath: "Acquisition.gov > FAR Overhaul",
+        sourceUrl,
+        retrievedAt,
+        effectiveDate: "",
+        excerpt: text.slice(0, 520),
+        bodyText: `${clean}\n${text}`.slice(0, 12000),
+        prescription: "",
+        related: []
       };
     })
     .filter(Boolean)
-    .slice(0, 8);
+    .slice(0, 80);
+  console.log(`Indexed FAR Overhaul links: ${linkNodes.length} nodes`);
+  return {
+    nodes: linkNodes,
+    parts: [{ regime: "FAR Overhaul", part: "overhaul", url, nodes: linkNodes.length }]
+  };
 }
 
-function extractEffectiveDate(html) {
-  const text = stripHtml(html);
-  const match = text.match(/Effective Date:\s*([0-9/.-]+)/i);
-  return match?.[1] || "";
-}
-
-function parsePartPage(html, part, retrievedAt) {
-  const effectiveDate = extractEffectiveDate(html);
-  const starts = [...html.matchAll(/<article\b[^>]*id="([^"]+)"[^>]*data-part="([^"]+)"[^>]*data-part-number="([^"]+)"/gi)].map(
-    (match) => ({
-      index: match.index || 0,
-      id: match[1],
-      dataPart: match[2],
-      citation: match[3]
-    })
-  );
-  const nodes = [];
-  for (let i = 0; i < starts.length; i += 1) {
-    const start = starts[i];
-    if (!/^\d+(\.\d+)?(-\d+)?$/.test(start.citation)) continue;
-    if (start.dataPart === "part" || start.dataPart === "subpart") continue;
-    const end = starts[i + 1]?.index || html.length;
-    const article = html.slice(start.index, end);
-    const text = stripHtml(article);
-    if (text.length < 80 || /\[Reserved\]$/.test(titleFromArticle(article, start.citation))) continue;
-    const title = titleFromArticle(article, start.citation);
-    const type = typeFromArticle(article, start.dataPart, start.citation);
-    const sourceUrl = sourceUrlForCitation(start.citation, part);
-    const bodyText = text.replace(new RegExp(`^${start.citation}\\s+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`), "");
-    nodes.push({
-      id: `far-${start.citation.replace(/\./g, "-").replace(/[^a-z0-9-]/gi, "-").toLowerCase()}`,
-      citation: start.citation,
-      title,
-      type,
-      part,
-      regime: "FAR",
-      hierarchyPath: `FAR > Part ${part} > ${start.citation}`,
-      sourceUrl,
-      retrievedAt,
-      effectiveDate,
-      excerpt: bodyText.slice(0, 520),
-      bodyText: bodyText.slice(0, 12000),
-      prescription: prescriptionFromText(bodyText),
-      related: relatedFromArticle(article)
-    });
+async function indexEcfrHistory(retrievedAt) {
+  const url = "https://www.ecfr.gov/api/versioner/v1/versions/title-48.json";
+  const first = await fetchText(url, "json");
+  const totalPages = Number(first.meta?.total_pages || 1);
+  const records = [...(first.content_versions || [])];
+  for (let page = 2; page <= Math.min(totalPages, 8); page += 1) {
+    const data = await fetchText(`${url}?page=${page}`, "json");
+    records.push(...(data.content_versions || []));
   }
-  return nodes;
-}
-
-async function fetchPart(part) {
-  const url = `${BASE_URL}/part-${part}`;
-  const res = await fetch(url, {
-    headers: {
-      "user-agent": "ClauseFinder public FAR indexer; contact: wayan.com"
-    }
+  const wanted = records.filter((item) => {
+    const part = Number(item.part);
+    return (
+      item.type === "section" &&
+      (part <= 53 || (part >= 201 && part <= 253) || (part >= 5301 && part <= 5352))
+    );
   });
-  if (!res.ok) throw new Error(`Failed ${url}: ${res.status}`);
-  const html = await res.text();
-  return { url, html };
+  const nodes = wanted.slice(0, 2500).map((item, index) => ({
+    id: `ecfr-history-${item.identifier}-${item.date}-${index}`.replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
+    citation: item.identifier,
+    title: item.name,
+    type: item.removed ? "historical removal" : "historical version",
+    part: item.part || "",
+    regime: "eCFR history",
+    hierarchyPath: `eCFR Title 48 > ${item.identifier}`,
+    sourceUrl: `https://www.ecfr.gov/current/title-48/section-${item.identifier}`,
+    retrievedAt,
+    effectiveDate: item.date || "",
+    excerpt: `${item.name}. Amendment date ${item.amendment_date}; issue date ${item.issue_date}; ${item.removed ? "removed" : "active/change record"}.`,
+    bodyText: JSON.stringify(item),
+    prescription: "",
+    related: []
+  }));
+  console.log(`Indexed eCFR history metadata: ${nodes.length} nodes`);
+  return {
+    nodes,
+    parts: [{ regime: "eCFR history", part: "title-48", url, nodes: nodes.length }]
+  };
 }
 
-const parts = partListFromArgs();
 const retrievedAt = new Date().toISOString().slice(0, 10);
-const nodes = [];
-const indexedParts = [];
+const bundles = [];
 
-for (const part of parts) {
-  const { url, html } = await fetchPart(part);
-  const partNodes = parsePartPage(html, part, retrievedAt);
-  indexedParts.push({ part, url, nodes: partNodes.length });
-  nodes.push(...partNodes);
-  console.log(`Indexed FAR Part ${part}: ${partNodes.length} nodes`);
-}
+bundles.push(await indexFar(retrievedAt));
+bundles.push(await indexAcquisitionGovRegime({
+  regime: "DFARS",
+  indexUrl: `${ACQ_BASE}/dfars`,
+  hrefPrefix: "/dfars/part-",
+  retrievedAt
+}));
+bundles.push(await indexAcquisitionGovRegime({
+  regime: "DAFFARS",
+  indexUrl: `${ACQ_BASE}/daffars`,
+  hrefPrefix: "/daffars/part-",
+  retrievedAt
+}));
+bundles.push(await indexFarOverhaul(retrievedAt));
+bundles.push(await indexFederalRegister(retrievedAt));
+bundles.push(await indexEcfrHistory(retrievedAt));
 
+const nodes = bundles.flatMap((bundle) => bundle.nodes);
+const parts = bundles.flatMap((bundle) => bundle.parts);
 const uniqueNodes = Array.from(new Map(nodes.map((node) => [node.id, node])).values()).sort((a, b) =>
-  a.citation.localeCompare(b.citation, undefined, { numeric: true })
+  String(a.citation).localeCompare(String(b.citation), undefined, { numeric: true })
 );
 
 await mkdir(dirname(OUT_PATH), { recursive: true });
@@ -187,9 +349,9 @@ await writeFile(
   JSON.stringify(
     {
       generatedAt: new Date().toISOString(),
-      source: "Acquisition.gov public FAR part pages",
-      sourceBaseUrl: BASE_URL,
-      parts: indexedParts,
+      source: "Acquisition.gov FAR/DFARS/DAFFARS, Acquisition.gov FAR Overhaul, Federal Register API, eCFR Title 48 versions API",
+      sourceBaseUrl: FAR_BASE,
+      parts,
       nodes: uniqueNodes
     },
     null,
@@ -197,4 +359,4 @@ await writeFile(
   )
 );
 
-console.log(`Wrote ${uniqueNodes.length} FAR nodes to ${OUT_PATH}`);
+console.log(`Wrote ${uniqueNodes.length} acquisition regulation nodes to ${OUT_PATH}`);
