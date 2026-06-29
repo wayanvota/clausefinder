@@ -152,14 +152,30 @@ function parseEcfrPartXml({ xml, part, date, retrievedAt, snapshotType }) {
 
 async function fetchPartSnapshot({ part, date, retrievedAt, snapshotType }) {
   const url = `https://www.ecfr.gov/api/versioner/v1/full/${date}/title-${TITLE}.xml?part=${part}`;
-  const xml = await fetchTextMaybe(url);
+  let xml;
+  try {
+    xml = await fetchTextMaybe(url);
+  } catch (error) {
+    if (process.env.ECFR_FAIL_ON_PART_ERROR === "true") throw error;
+    console.warn(`Skipped eCFR ${snapshotType} Part ${part} on ${date}: ${error?.message || error}`);
+    return {
+      nodes: [],
+      error: {
+        part: String(part),
+        date,
+        snapshotType,
+        url,
+        message: String(error?.message || error)
+      }
+    };
+  }
   if (!xml) {
     console.log(`Skipped eCFR ${snapshotType} Part ${part} on ${date}: no XML available`);
-    return [];
+    return { nodes: [], error: null };
   }
   const nodes = parseEcfrPartXml({ xml, part, date, retrievedAt, snapshotType });
   console.log(`Indexed eCFR ${snapshotType} Part ${part} on ${date}: ${nodes.length} nodes`);
-  return nodes;
+  return { nodes, error: null };
 }
 
 async function allVersionRecords(maxPages) {
@@ -184,11 +200,14 @@ async function buildNodes() {
   const maxHistorySnapshots = Number(process.env.ECFR_MAX_HISTORY_SNAPSHOTS || 120);
   const maxVersionPages = process.env.ECFR_VERSION_PAGES || "all";
   const nodes = [];
+  const skipped = [];
 
   if (includeCurrent) {
     const currentDate = await ecfrCurrentDate();
     for (const part of parts) {
-      nodes.push(...(await fetchPartSnapshot({ part, date: currentDate, retrievedAt, snapshotType: "current" })));
+      const snapshot = await fetchPartSnapshot({ part, date: currentDate, retrievedAt, snapshotType: "current" });
+      nodes.push(...snapshot.nodes);
+      if (snapshot.error) skipped.push(snapshot.error);
     }
   }
 
@@ -204,14 +223,14 @@ async function buildNodes() {
     const uniqueSnapshots = Array.from(new Map(snapshots.map((item) => [`${item.part}|${item.date}`, item])).values())
       .slice(0, maxHistorySnapshots);
     for (const snapshot of uniqueSnapshots) {
-      nodes.push(
-        ...(await fetchPartSnapshot({
-          part: snapshot.part,
-          date: snapshot.date,
-          retrievedAt,
-          snapshotType: "historical"
-        }))
-      );
+      const parsedSnapshot = await fetchPartSnapshot({
+        part: snapshot.part,
+        date: snapshot.date,
+        retrievedAt,
+        snapshotType: "historical"
+      });
+      nodes.push(...parsedSnapshot.nodes);
+      if (parsedSnapshot.error) skipped.push(parsedSnapshot.error);
     }
   }
 
@@ -220,6 +239,8 @@ async function buildNodes() {
     retrievedAt,
     source: "eCFR Title 48 XML full text and version metadata",
     nodeCount: nodes.length,
+    skippedCount: skipped.length,
+    skipped,
     nodes
   };
 }
@@ -270,7 +291,7 @@ async function writeToDatabase(cache) {
     await ensureSchema(client);
     const run = await client.query(
       "insert into source_refresh_runs (source, details) values ($1, $2) returning id",
-      ["ecfr", JSON.stringify({ generatedAt: cache.generatedAt })]
+      ["ecfr", JSON.stringify({ generatedAt: cache.generatedAt, skippedCount: cache.skippedCount, skipped: cache.skipped })]
     );
     runId = run.rows[0].id;
     await client.query("begin");
@@ -356,6 +377,8 @@ console.log(
     {
       ok: true,
       nodeCount: cache.nodeCount,
+      skippedCount: cache.skippedCount,
+      skipped: cache.skipped,
       databaseWritten,
       jsonWritten,
       cachePath: jsonWritten ? CACHE_PATH : "",
