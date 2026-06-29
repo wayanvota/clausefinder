@@ -51,6 +51,40 @@ const STOP_WORDS = new Set([
 
 let indexCache;
 
+function normalizeCitation(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/\b(?:far|dfars|daffars|cfr|title|section|part)\b/g, " ")
+    .replace(/\b48\s+/g, " ")
+    .replace(/\([a-z0-9]+\)/gi, "")
+    .replace(/[^\d.-]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((piece) => {
+      const spacedClause = piece.match(/^(\d{2,4})[.\s-](\d{3})\s+(\d{3,4})$/);
+      return spacedClause ? `${spacedClause[1]}.${spacedClause[2]}-${spacedClause[3]}` : piece;
+    })
+    .join(" ");
+}
+
+function citationKey(value) {
+  return normalizeCitation(value).replace(/[^0-9a-z.-]/g, "");
+}
+
+export function extractCitations(value) {
+  const text = String(value || "");
+  const direct = [...text.matchAll(/\b(?:FAR|DFARS|DAFFARS|48\s+CFR)?\s*(\d{1,4}\.\d{1,4}(?:-\d{1,4})?)(?:\([a-z0-9]+\))*/gi)].map(
+    (match) => match[1]
+  );
+  const spaced = [...text.matchAll(/\b(?:FAR|DFARS|DAFFARS)?\s*(\d{2,4})[.\s-](\d{3})\s+(\d{3,4})\b/gi)].map(
+    (match) => `${match[1]}.${match[2]}-${match[3]}`
+  );
+  const citations = [...new Set([...direct, ...spaced].map(citationKey).filter(Boolean))];
+  return citations.filter(
+    (citation) => !citations.some((other) => other !== citation && other.startsWith(`${citation}-`))
+  );
+}
+
 export function tokenize(value) {
   return String(value || "")
     .toLowerCase()
@@ -122,6 +156,8 @@ export async function loadIndex() {
   let totalLength = 0;
 
   for (const node of nodes) {
+    node.citationKey = citationKey(node.citation);
+    node.relatedCitationKeys = (node.related || []).map((item) => citationKey(item.label)).filter(Boolean);
     node.searchTokens = tokenize(
       `${node.citation} ${node.title} ${node.type} ${node.bodyText} ${node.prescription || ""}`
     );
@@ -185,9 +221,18 @@ function bm25(node, queryTokens, index) {
   return score;
 }
 
-function exactCitationHit(node, query) {
-  const normalized = query.toLowerCase().replace(/\s+/g, " ");
-  return normalized.includes(node.citation.toLowerCase()) ? 1 : 0;
+function citationHitScore(node, queryCitations) {
+  if (!queryCitations.length) return 0;
+  let score = 0;
+  for (const queryCitation of queryCitations) {
+    if (node.citationKey === queryCitation) score = Math.max(score, 1);
+    else if (node.citationKey.startsWith(queryCitation) || queryCitation.startsWith(node.citationKey)) {
+      score = Math.max(score, 0.82);
+    } else if (node.relatedCitationKeys?.includes(queryCitation)) {
+      score = Math.max(score, 0.55);
+    }
+  }
+  return score;
 }
 
 function domainBoost(node, query, context) {
@@ -213,9 +258,12 @@ function domainBoost(node, query, context) {
   return boost;
 }
 
-function plainReason(result, queryTokens, contextReasons) {
-  if (exactCitationHit(result, queryTokens.join(" "))) {
+function plainReason(result, queryTokens, contextReasons, citationScore) {
+  if (citationScore >= 1) {
     return "The query names this citation directly.";
+  }
+  if (citationScore > 0) {
+    return "The query appears to name this citation family or a cited related authority.";
   }
   const matched = queryTokens.filter((token) => result.tokenSet.has(token)).slice(0, 5);
   const context = contextReasons.length ? ` Context signals: ${contextReasons.join(", ")}.` : "";
@@ -242,18 +290,24 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
 
   const index = await loadIndex();
   const queryTokens = tokenize(trimmed);
+  const queryCitations = extractCitations(trimmed);
   const rawScores = index.nodes.map((node) => {
     const lexical = bm25(node, queryTokens, index);
-    const exact = exactCitationHit(node, trimmed);
+    const citationScore = citationHitScore(node, queryCitations);
     const ctx = contextBoost(node, inferredContext);
     const phrase = node.bodyText.toLowerCase().includes(trimmed.toLowerCase()) ? 0.5 : 0;
-    const composite = lexical + exact * 4 + ctx.score + phrase + domainBoost(node, trimmed, inferredContext);
-    return { node, lexical, exact, contextScore: ctx.score, contextReasons: ctx.reasons, composite };
+    const composite = lexical + citationScore * 18 + ctx.score + phrase + domainBoost(node, trimmed, inferredContext);
+    return { node, lexical, citationScore, contextScore: ctx.score, contextReasons: ctx.reasons, composite };
   });
   const max = Math.max(...rawScores.map((item) => item.composite), 1);
   const results = rawScores
     .filter((item) => item.composite > 0)
-    .sort((a, b) => b.composite - a.composite)
+    .sort((a, b) => {
+      if (queryCitations.length && Math.abs(b.citationScore - a.citationScore) >= 0.2) {
+        return b.citationScore - a.citationScore;
+      }
+      return b.composite - a.composite;
+    })
     .slice(0, Math.max(1, Math.min(Number(limit) || 8, 20)))
     .map((item) => {
       const normalized = item.composite / max;
@@ -283,7 +337,7 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
           applicability: Number(applicability.toFixed(3)),
           supplement: Number(supplement.toFixed(3))
         },
-        whyRelevant: plainReason(item.node, queryTokens, item.contextReasons),
+        whyRelevant: plainReason(item.node, queryTokens, item.contextReasons, item.citationScore),
         mightNotApply:
           "This is a candidate authority, not a compliance verdict. Verify the prescription, dates, agency supplements, and contract facts.",
         version: {

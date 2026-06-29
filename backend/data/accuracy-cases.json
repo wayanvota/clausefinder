@@ -1,0 +1,54 @@
+[
+  {
+    "id": "sam-registration",
+    "query": "What changed about SAM registration under the FAR overhaul?",
+    "context": {
+      "acquisitionType": "Service",
+      "commerciality": "Commercial",
+      "fundingLayer": "Air Force"
+    },
+    "expectedTopFive": ["52.204-13", "4.1102"]
+  },
+  {
+    "id": "micro-purchase-supply",
+    "query": "I have a 9000 dollar supply buy, what are my options?",
+    "context": {
+      "acquisitionType": "Supply",
+      "fundingLayer": "Air Force"
+    },
+    "expectedTopFive": ["13.201"]
+  },
+  {
+    "id": "basic-safeguarding",
+    "query": "Which clauses cover safeguarding contractor information systems?",
+    "context": {
+      "acquisitionType": "Service",
+      "fundingLayer": "Air Force"
+    },
+    "expectedTopFive": ["52.204-21", "4.1903", "252.204-7008"]
+  },
+  {
+    "id": "exact-far-prescription",
+    "query": "FAR 4.1903",
+    "context": {
+      "fundingLayer": "Air Force"
+    },
+    "expectedTopOne": ["4.1903"]
+  },
+  {
+    "id": "exact-dfars-cyber",
+    "query": "DFARS 252.204-7012",
+    "context": {
+      "fundingLayer": "DoD"
+    },
+    "expectedTopOne": ["252.204-7012"]
+  },
+  {
+    "id": "dfars-cyber-spaced-citation",
+    "query": "What does DFARS 252.204 7012 require?",
+    "context": {
+      "fundingLayer": "DoD"
+    },
+    "expectedTopOne": ["252.204-7012"]
+  }
+]

@@ -7,7 +7,9 @@
     "dev": "node server.js",
     "start": "node server.js",
     "index:far": "node scripts/build-far-index.mjs",
-    "test": "node scripts/smoke-test.mjs"
+    "test": "node scripts/smoke-test.mjs && node scripts/accuracy-test.mjs",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:accuracy": "node scripts/accuracy-test.mjs"
   },
   "engines": {
     "node": ">=20"

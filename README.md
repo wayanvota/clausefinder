@@ -1,6 +1,6 @@
 # ClauseFinder
 
-ClauseFinder is a public acquisition-rule search project by Wayan Vota. It helps users paste a plain-language acquisition question, answer clarifying questions, and find candidate FAR, DFARS, DAFFARS, FAR Overhaul, Federal Register, and eCFR-history signals from public sources.
+ClauseFinder is a public acquisition-rule search project by Wayan Vota. It helps users paste a plain-language acquisition question, answer clarifying questions, and find candidate FAR, DFARS, DAFFARS, FAR Overhaul, Federal Register, current eCFR full-text, and eCFR-history signals from public sources.
 
 The core position is explicit: this is decision support, not a compliance verdict. Every result should be treated as a candidate authority that a warranted professional still verifies.
 
@@ -59,7 +59,7 @@ The frontend proxies `/api` to the local backend.
 npm run index:far
 ```
 
-The indexer fetches public FAR, DFARS, DAFFARS, FAR Overhaul, Federal Register proposed-rule, and eCFR Title 48 version metadata sources, then writes `backend/data/far-index.json`.
+The indexer fetches public FAR, DFARS, DAFFARS, FAR Overhaul, Federal Register proposed-rule, current eCFR Title 48 XML, and eCFR Title 48 version metadata sources, then writes `backend/data/far-index.json`.
 
 ## Checks
 
@@ -67,6 +67,9 @@ The indexer fetches public FAR, DFARS, DAFFARS, FAR Overhaul, Federal Register p
 npm --prefix backend test
 npm run build
 ```
+
+The backend test suite includes smoke checks and a small accuracy set in
+`backend/data/accuracy-cases.json`.
 
 ## API
 
@@ -100,7 +103,7 @@ If using Neon later, apply `backend/scripts/neon-schema.sql` and add a `DATABASE
 
 ## Current Limits
 
-- eCFR coverage is version metadata, not full historical text snapshots.
+- eCFR current full text is indexed where the public Title 48 XML endpoint exposes the part. Historical eCFR coverage is still version metadata, not full historical text snapshots.
 - Federal Register proposed-rule coverage indexes available abstracts and metadata.
 - FAR Overhaul coverage indexes public source pages and links; deviation PDF/text extraction should be hardened before operational use.
 - Ranking is lexical with domain-specific boosts, not legal reasoning.

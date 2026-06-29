@@ -40,11 +40,28 @@ function stripHtml(html) {
   );
 }
 
+function stripXml(xml) {
+  return decodeEntities(
+    String(xml || "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
 async function fetchText(url, as = "text") {
   const res = await fetch(url, {
     headers: { "user-agent": "ClauseFinder public acquisition regulation indexer; contact: wayan.com" }
   });
   if (!res.ok) throw new Error(`Failed ${url}: ${res.status}`);
+  return as === "json" ? res.json() : res.text();
+}
+
+async function fetchTextMaybe(url, as = "text") {
+  const res = await fetch(url, {
+    headers: { "user-agent": "ClauseFinder public acquisition regulation indexer; contact: wayan.com" }
+  });
+  if (!res.ok) return null;
   return as === "json" ? res.json() : res.text();
 }
 
@@ -68,6 +85,11 @@ function typeFromArticle(article, dataPart, citation) {
 function prescriptionFromText(text) {
   const match = text.match(/As prescribed in ([^.]{1,260}\.)/i);
   return match ? `As prescribed in ${match[1]}` : "";
+}
+
+function typeFromCitation(citation) {
+  if (/^(52|252|5352)\.\d+-/.test(String(citation))) return "clause/provision";
+  return "section";
 }
 
 function relatedFromArticle(article) {
@@ -317,6 +339,71 @@ async function indexEcfrHistory(retrievedAt) {
   };
 }
 
+async function ecfrCurrentDate() {
+  const data = await fetchText("https://www.ecfr.gov/api/versioner/v1/titles", "json");
+  const title48 = (data.titles || []).find((title) => Number(title.number) === 48);
+  return title48?.up_to_date_as_of || title48?.latest_issue_date || title48?.latest_amended_on;
+}
+
+function parseEcfrPartXml({ xml, part, date, retrievedAt }) {
+  const starts = [...xml.matchAll(/<DIV8\b[^>]*\bN="([^"]+)"[^>]*\bTYPE="SECTION"[^>]*>/gi)].map((match) => ({
+    index: match.index || 0,
+    tag: match[0],
+    citation: match[1]
+  }));
+  const nodes = [];
+  for (let i = 0; i < starts.length; i += 1) {
+    const start = starts[i];
+    const end = starts[i + 1]?.index || xml.length;
+    const sectionXml = xml.slice(start.index, end);
+    const heading = stripXml(sectionXml.match(/<HEAD>([\s\S]*?)<\/HEAD>/i)?.[1] || start.citation)
+      .replace(new RegExp(`^${start.citation}\\s*`), "")
+      .trim();
+    const text = stripXml(sectionXml);
+    if (text.length < 80 || /\[Reserved\]/i.test(heading)) continue;
+    const bodyText = text.replace(new RegExp(`^${start.citation}\\s*`), "");
+    nodes.push({
+      id: `ecfr-current-${start.citation}-${date}`.replace(/[^a-z0-9-]/gi, "-").toLowerCase(),
+      citation: start.citation,
+      title: heading || start.citation,
+      type: typeFromCitation(start.citation),
+      part,
+      regime: "eCFR current full text",
+      hierarchyPath: `eCFR Title 48 > Part ${part} > ${start.citation}`,
+      sourceUrl: `https://www.ecfr.gov/current/title-48/section-${start.citation}`,
+      retrievedAt,
+      effectiveDate: date,
+      excerpt: bodyText.slice(0, 520),
+      bodyText: bodyText.slice(0, 12000),
+      prescription: prescriptionFromText(bodyText),
+      related: []
+    });
+  }
+  return nodes;
+}
+
+async function indexEcfrCurrentFullText(retrievedAt, candidateParts) {
+  const date = await ecfrCurrentDate();
+  const partsToFetch = [...new Set(candidateParts.map(Number).filter(Boolean))]
+    .filter((part) => part <= 53 || (part >= 201 && part <= 253) || (part >= 5301 && part <= 5352))
+    .sort((a, b) => a - b);
+  const nodes = [];
+  const parts = [];
+  for (const part of partsToFetch) {
+    const url = `https://www.ecfr.gov/api/versioner/v1/full/${date}/title-48.xml?part=${part}`;
+    const xml = await fetchTextMaybe(url);
+    if (!xml || xml.trim().startsWith("{")) {
+      console.log(`Skipped eCFR current Part ${part}: no XML available`);
+      continue;
+    }
+    const partNodes = parseEcfrPartXml({ xml, part, date, retrievedAt });
+    parts.push({ regime: "eCFR current full text", part, url, nodes: partNodes.length });
+    nodes.push(...partNodes);
+    console.log(`Indexed eCFR current Part ${part}: ${partNodes.length} nodes`);
+  }
+  return { nodes, parts };
+}
+
 const retrievedAt = new Date().toISOString().slice(0, 10);
 const bundles = [];
 
@@ -333,6 +420,11 @@ bundles.push(await indexAcquisitionGovRegime({
   hrefPrefix: "/daffars/part-",
   retrievedAt
 }));
+const currentParts = bundles
+  .flatMap((bundle) => bundle.parts)
+  .filter((part) => ["FAR", "DFARS", "DAFFARS"].includes(part.regime) && Number(part.nodes) > 0)
+  .map((part) => part.part);
+bundles.push(await indexEcfrCurrentFullText(retrievedAt, currentParts));
 bundles.push(await indexFarOverhaul(retrievedAt));
 bundles.push(await indexFederalRegister(retrievedAt));
 bundles.push(await indexEcfrHistory(retrievedAt));
@@ -349,7 +441,7 @@ await writeFile(
   JSON.stringify(
     {
       generatedAt: new Date().toISOString(),
-      source: "Acquisition.gov FAR/DFARS/DAFFARS, Acquisition.gov FAR Overhaul, Federal Register API, eCFR Title 48 versions API",
+      source: "Acquisition.gov FAR/DFARS/DAFFARS, Acquisition.gov FAR Overhaul, Federal Register API, eCFR Title 48 current full text and versions APIs",
       sourceBaseUrl: FAR_BASE,
       parts,
       nodes: uniqueNodes

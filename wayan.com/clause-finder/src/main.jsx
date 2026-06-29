@@ -506,9 +506,9 @@ function AboutPage() {
       <p>
         It was built by Wayan Vota as a showcase for acquisition AI that makes
         uncertainty visible. The tool searches indexed public FAR, DFARS,
-        DAFFARS, FAR Overhaul, Federal Register, and eCFR-history signals,
-        ranks candidate authorities, links back to public source pages, and
-        keeps the human verification step in the workflow.
+        DAFFARS, FAR Overhaul, Federal Register, current eCFR full text, and
+        eCFR-history signals, ranks candidate authorities, links back to public
+        source pages, and keeps the human verification step in the workflow.
       </p>
       <p>
         The strongest use case is first-pass orientation: a contracting officer,
@@ -525,18 +525,19 @@ function MethodPage({ meta }) {
       <h2>How the search works</h2>
       <p>
         The backend fetches public FAR, DFARS, DAFFARS, FAR Overhaul, Federal
-        Register proposed-rule, and eCFR Title 48 version metadata sources,
-        extracts retrievable nodes into a JSON index, then scores user queries
-        with lexical ranking plus context boosts for buying type, commerciality,
-        thresholds, competition, funding layer, and urgency.
+        Register proposed-rule, current eCFR Title 48 XML, and eCFR Title 48
+        version metadata sources, extracts retrievable nodes into a JSON index,
+        then scores user queries with lexical ranking plus context boosts for
+        buying type, commerciality, thresholds, competition, funding layer, and
+        urgency.
       </p>
       <p>
         The current index contains {meta?.totalNodes?.toLocaleString() || "loading"} nodes.
         The OpenAI API asks clarifying questions and writes a grounded summary
-        only from retrieved candidates. eCFR coverage is currently version
-        metadata, not full historical text snapshots, and FAR Overhaul deviation
-        extraction still needs a reviewer-grade text pipeline before operational
-        use.
+        only from retrieved candidates. eCFR current full text is indexed where
+        the public Title 48 XML endpoint exposes the part. Historical eCFR
+        coverage is still version metadata, and FAR Overhaul deviation extraction
+        still needs a reviewer-grade text pipeline before operational use.
       </p>
     </main>
   );
@@ -549,8 +550,9 @@ function SourcesPage({ meta }) {
       <p>
         The searchable corpus is generated from Acquisition.gov FAR, DFARS,
         DAFFARS, and FAR Overhaul pages, Federal Register proposed-rule metadata,
-        and eCFR Title 48 version metadata. Every candidate result links back to
-        its public source page when the source provides one.
+        current eCFR Title 48 XML, and eCFR Title 48 version metadata. Every
+        candidate result links back to its public source page when the source
+        provides one.
       </p>
       <div className="source-grid">
         {(meta?.parts || []).map((part) => (
