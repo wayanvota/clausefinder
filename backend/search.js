@@ -1,10 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import pg from "pg";
 import { groundedAnswer } from "./openai.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = process.env.FAR_INDEX_PATH || join(__dirname, "data", "far-index.json");
+const DATABASE_SEARCH_ENABLED = process.env.ECFR_SEARCH_DATABASE !== "false";
+const DATABASE_NODE_LIMIT = Number(process.env.ECFR_SEARCH_NODE_LIMIT || 50000);
 
 const STOP_WORDS = new Set([
   "a",
@@ -50,6 +53,7 @@ const STOP_WORDS = new Set([
 ]);
 
 let indexCache;
+let databaseLoadWarningLogged = false;
 
 function normalizeCitation(value) {
   return String(value || "")
@@ -147,11 +151,73 @@ export function inferContext(question, provided = {}) {
   return context;
 }
 
+function dateValue(value) {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
+
+function rowToNode(row) {
+  const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+  return {
+    id: row.id,
+    citation: row.citation,
+    title: row.title,
+    type: row.type,
+    part: row.part,
+    regime: row.regime,
+    sourceUrl: row.source_url,
+    retrievedAt: dateValue(row.retrieved_at),
+    effectiveDate: dateValue(row.effective_date),
+    snapshotDate: dateValue(row.snapshot_date),
+    snapshotType: row.snapshot_type,
+    excerpt: row.excerpt || "",
+    bodyText: row.body_text || "",
+    prescription: metadata.prescription || "",
+    hierarchyPath: ["eCFR", `Title ${metadata.title || 48}`, `Part ${row.part}`],
+    related: [],
+    metadata
+  };
+}
+
+async function loadDatabaseNodes() {
+  if (!DATABASE_SEARCH_ENABLED || !process.env.DATABASE_URL) return [];
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL.includes("sslmode=require") ? undefined : { rejectUnauthorized: false }
+  });
+  try {
+    const result = await pool.query(
+      `select
+        id, citation, title, type, part, regime, source_url, retrieved_at,
+        effective_date, snapshot_date, snapshot_type, excerpt, body_text, metadata
+      from ecfr_nodes
+      order by
+        case when snapshot_type = 'current' then 0 else 1 end,
+        snapshot_date desc,
+        citation asc
+      limit $1`,
+      [DATABASE_NODE_LIMIT]
+    );
+    return result.rows.map(rowToNode);
+  } catch (error) {
+    if (!databaseLoadWarningLogged) {
+      console.warn(`eCFR database search overlay unavailable: ${error?.message || error}`);
+      databaseLoadWarningLogged = true;
+    }
+    return [];
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function loadIndex() {
   if (indexCache) return indexCache;
   const raw = await readFile(INDEX_PATH, "utf8");
   const parsed = JSON.parse(raw);
-  const nodes = parsed.nodes || [];
+  const staticNodes = parsed.nodes || [];
+  const databaseNodes = await loadDatabaseNodes();
+  const nodes = [...staticNodes, ...databaseNodes];
   const docFreq = new Map();
   let totalLength = 0;
 
@@ -171,6 +237,10 @@ export async function loadIndex() {
   indexCache = {
     ...parsed,
     nodes,
+    sourceStats: {
+      staticNodes: staticNodes.length,
+      ecfrDatabaseNodes: databaseNodes.length
+    },
     docFreq,
     averageLength: nodes.length ? totalLength / nodes.length : 1
   };
@@ -384,6 +454,7 @@ export async function getMeta() {
     generatedAt: index.generatedAt,
     sourceBaseUrl: index.sourceBaseUrl,
     totalNodes: index.nodes.length,
-    parts: index.parts || []
+    parts: index.parts || [],
+    sourceStats: index.sourceStats || {}
   };
 }
