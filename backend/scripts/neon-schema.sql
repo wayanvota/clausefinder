@@ -28,6 +28,25 @@ create table if not exists source_refresh_runs (
   details jsonb not null default '{}'::jsonb
 );
 
+create table if not exists source_nodes (
+  id text primary key,
+  citation text not null,
+  title text not null,
+  type text not null,
+  part text,
+  regime text not null,
+  source_url text,
+  retrieved_at text,
+  effective_date text,
+  excerpt text not null default '',
+  body_text text not null default '',
+  prescription text not null default '',
+  hierarchy_path jsonb not null default '[]'::jsonb,
+  related jsonb not null default '[]'::jsonb,
+  metadata jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists ecfr_nodes (
   id text primary key,
   citation text not null,
@@ -46,6 +65,9 @@ create table if not exists ecfr_nodes (
   updated_at timestamptz not null default now()
 );
 
+create index if not exists source_nodes_citation_idx on source_nodes (citation);
+create index if not exists source_nodes_regime_idx on source_nodes (regime);
+create index if not exists source_nodes_part_idx on source_nodes (part);
 create index if not exists ecfr_nodes_citation_idx on ecfr_nodes (citation);
 create index if not exists ecfr_nodes_part_snapshot_idx on ecfr_nodes (part, snapshot_date desc);
 create index if not exists ecfr_nodes_regime_idx on ecfr_nodes (regime);

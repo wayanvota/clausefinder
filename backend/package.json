@@ -8,6 +8,7 @@
     "start": "node server.js",
     "index:far": "node scripts/build-far-index.mjs",
     "refresh:ecfr-cache": "node scripts/refresh-ecfr-cache.mjs",
+    "import:static-index": "node scripts/import-static-index.mjs",
     "test": "node scripts/smoke-test.mjs && node scripts/accuracy-test.mjs",
     "test:smoke": "node scripts/smoke-test.mjs",
     "test:accuracy": "node scripts/accuracy-test.mjs"

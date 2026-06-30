@@ -21,9 +21,11 @@ Do not commit `.env.local`. It is only for local development.
 
 ## Neon
 
-Neon is optional for the basic app because the search index is committed at
-`backend/data/far-index.json`. Neon is useful for the larger eCFR refresh job,
-source refresh logs, reviewer feedback, and future query analytics.
+Neon is optional for local development because the search index is committed at
+`backend/data/far-index.json`. For the public Render deployment, use Neon as the
+durable source cache. It can hold the committed FAR, DFARS, DAFFARS, FAR
+Overhaul, Federal Register proposed-rule, eCFR current, and eCFR history nodes,
+plus the larger live eCFR refresh cache.
 
 Create the database:
 
@@ -37,8 +39,40 @@ Create the database:
 8. Paste the Neon connection string as the value.
 9. Save changes and redeploy the backend.
 
-The eCFR refresh job creates its own required tables if they do not exist. The
-schema is also stored in `backend/scripts/neon-schema.sql` for inspection.
+The import and refresh jobs create their required tables if they do not exist.
+The schema is also stored in `backend/scripts/neon-schema.sql` for inspection.
+
+## Static Source Import
+
+After `DATABASE_URL` is set on the Render backend and the backend has
+redeployed, import the committed search index into Neon:
+
+```bash
+npm run import:static-index
+```
+
+If you run it from the repo root instead of the backend service directory:
+
+```bash
+npm --prefix backend run import:static-index
+```
+
+This populates `source_nodes`. After import, the backend prefers `source_nodes`
+over the bundled JSON file, while still appending rows from `ecfr_nodes` as the
+live eCFR overlay.
+
+Useful Neon checks:
+
+```sql
+select count(*) as source_nodes from source_nodes;
+select regime, count(*) from source_nodes group by regime order by regime;
+select count(*) as ecfr_nodes from ecfr_nodes;
+select snapshot_type, count(*) from ecfr_nodes group by snapshot_type order by snapshot_type;
+select source, status, node_count, completed_at, details
+from source_refresh_runs
+order by started_at desc
+limit 10;
+```
 
 ## eCFR Cache Refresh
 
@@ -83,6 +117,10 @@ ECFR_PARTS=52 ECFR_HISTORY_LOOKBACK_DAYS=90 ECFR_MAX_HISTORY_SNAPSHOTS=5 npm run
 
 ## Operational Notes
 
+- Run the static source import after `DATABASE_URL` is set. Without it, the app
+  still works from the bundled JSON index, but Neon will not contain FAR,
+  DFARS, DAFFARS, FAR Overhaul, or Federal Register proposed-rule rows in
+  `source_nodes`.
 - Run the eCFR cache refresh after `DATABASE_URL` is set.
 - Keep `ECFR_WRITE_JSON=false` on Render so the job writes to Neon rather than
   the service filesystem.
@@ -92,8 +130,9 @@ ECFR_PARTS=52 ECFR_HISTORY_LOOKBACK_DAYS=90 ECFR_MAX_HISTORY_SNAPSHOTS=5 npm run
 - If the eCFR XML endpoint returns a 5xx error, rerun the command later. The
   refresh script retries transient failures and fails rather than writing an
   empty cache unless `ECFR_ALLOW_EMPTY=true` is set for diagnostics.
-- The committed static index remains the fast default search path. The Neon
-  cache is for heavier eCFR history work and future database-backed retrieval.
+- When `source_nodes` has rows, the backend uses Neon as the primary source
+  cache at startup. When `source_nodes` is empty or unavailable, it falls back
+  to the committed JSON index.
 
 ## References
 

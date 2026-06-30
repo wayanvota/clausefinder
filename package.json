@@ -12,6 +12,7 @@
     "index:sources": "npm --prefix backend run index:far",
     "index:far": "npm run index:sources",
     "refresh:ecfr-cache": "npm --prefix backend run refresh:ecfr-cache",
+    "import:static-index": "npm --prefix backend run import:static-index",
     "test:backend": "npm --prefix backend test"
   },
   "workspaces": [

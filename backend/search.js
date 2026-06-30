@@ -53,7 +53,8 @@ const STOP_WORDS = new Set([
 ]);
 
 let indexCache;
-let databaseLoadWarningLogged = false;
+let sourceDatabaseLoadWarningLogged = false;
+let ecfrDatabaseLoadWarningLogged = false;
 
 function normalizeCitation(value) {
   return String(value || "")
@@ -180,12 +181,71 @@ function rowToNode(row) {
   };
 }
 
-async function loadDatabaseNodes() {
-  if (!DATABASE_SEARCH_ENABLED || !process.env.DATABASE_URL) return [];
-  const pool = new pg.Pool({
+function sourceRowToNode(row) {
+  const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+  const hierarchyPath = Array.isArray(row.hierarchy_path) ? row.hierarchy_path : [];
+  const related = Array.isArray(row.related) ? row.related : [];
+  return {
+    id: row.id,
+    citation: row.citation,
+    title: row.title,
+    type: row.type,
+    part: row.part,
+    regime: row.regime,
+    sourceUrl: row.source_url,
+    retrievedAt: dateValue(row.retrieved_at),
+    effectiveDate: dateValue(row.effective_date),
+    excerpt: row.excerpt || "",
+    bodyText: row.body_text || "",
+    prescription: row.prescription || metadata.prescription || "",
+    hierarchyPath,
+    related,
+    metadata
+  };
+}
+
+function dbPool() {
+  return new pg.Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL.includes("sslmode=require") ? undefined : { rejectUnauthorized: false }
   });
+}
+
+async function loadSourceDatabaseNodes() {
+  if (!DATABASE_SEARCH_ENABLED || !process.env.DATABASE_URL) return [];
+  const pool = dbPool();
+  try {
+    const result = await pool.query(
+      `select
+        id, citation, title, type, part, regime, source_url, retrieved_at,
+        effective_date, excerpt, body_text, prescription, hierarchy_path, related, metadata
+      from source_nodes
+      order by
+        case
+          when regime = 'FAR' then 0
+          when regime = 'DFARS' then 1
+          when regime = 'DAFFARS' then 2
+          else 3
+        end,
+        citation asc
+      limit $1`,
+      [DATABASE_NODE_LIMIT]
+    );
+    return result.rows.map(sourceRowToNode);
+  } catch (error) {
+    if (!sourceDatabaseLoadWarningLogged) {
+      console.warn(`source_nodes database corpus unavailable: ${error?.message || error}`);
+      sourceDatabaseLoadWarningLogged = true;
+    }
+    return [];
+  } finally {
+    await pool.end();
+  }
+}
+
+async function loadEcfrDatabaseNodes() {
+  if (!DATABASE_SEARCH_ENABLED || !process.env.DATABASE_URL) return [];
+  const pool = dbPool();
   try {
     const result = await pool.query(
       `select
@@ -201,9 +261,9 @@ async function loadDatabaseNodes() {
     );
     return result.rows.map(rowToNode);
   } catch (error) {
-    if (!databaseLoadWarningLogged) {
+    if (!ecfrDatabaseLoadWarningLogged) {
       console.warn(`eCFR database search overlay unavailable: ${error?.message || error}`);
-      databaseLoadWarningLogged = true;
+      ecfrDatabaseLoadWarningLogged = true;
     }
     return [];
   } finally {
@@ -216,8 +276,10 @@ export async function loadIndex() {
   const raw = await readFile(INDEX_PATH, "utf8");
   const parsed = JSON.parse(raw);
   const staticNodes = parsed.nodes || [];
-  const databaseNodes = await loadDatabaseNodes();
-  const nodes = [...staticNodes, ...databaseNodes];
+  const sourceDatabaseNodes = await loadSourceDatabaseNodes();
+  const primaryNodes = sourceDatabaseNodes.length ? sourceDatabaseNodes : staticNodes;
+  const ecfrDatabaseNodes = await loadEcfrDatabaseNodes();
+  const nodes = [...primaryNodes, ...ecfrDatabaseNodes];
   const docFreq = new Map();
   let totalLength = 0;
 
@@ -238,8 +300,9 @@ export async function loadIndex() {
     ...parsed,
     nodes,
     sourceStats: {
-      staticNodes: staticNodes.length,
-      ecfrDatabaseNodes: databaseNodes.length
+      staticNodes: sourceDatabaseNodes.length ? 0 : staticNodes.length,
+      sourceDatabaseNodes: sourceDatabaseNodes.length,
+      ecfrDatabaseNodes: ecfrDatabaseNodes.length
     },
     docFreq,
     averageLength: nodes.length ? totalLength / nodes.length : 1
