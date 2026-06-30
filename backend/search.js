@@ -409,6 +409,11 @@ function domainBoost(node, query, context) {
     if (/^(4\.11|52\.204)/.test(String(node.citation))) boost += 1.6;
     if (/system for award management|sam registration|registered in sam/i.test(`${node.title} ${node.bodyText}`)) boost += 1.2;
   }
+  if (/(electronic funds transfer|\beft\b|payment information|payment by electronic funds transfer)/.test(text)) {
+    if (String(node.citation) === "52.232-33") boost += 11;
+    if (/payment by electronic funds transfer|system for award management/i.test(`${node.title} ${node.bodyText}`)) boost += 2.5;
+    if (/^(4\.11|52\.204)/.test(String(node.citation))) boost -= 1.5;
+  }
   if (/(safeguard|covered contractor information|cyber|information system|security requirement)/.test(text)) {
     if (/52\.204-(2|21)/.test(String(node.citation))) boost += 2;
     if (/safeguarding|covered contractor information systems|security requirements/i.test(`${node.title} ${node.bodyText}`)) boost += 1.1;
