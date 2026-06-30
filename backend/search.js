@@ -6,6 +6,7 @@ import { groundedAnswer } from "./openai.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = process.env.FAR_INDEX_PATH || join(__dirname, "data", "far-index.json");
+const ACCURACY_CASES_PATH = process.env.ACCURACY_CASES_PATH || join(__dirname, "data", "accuracy-cases.json");
 const DATABASE_SEARCH_ENABLED = process.env.ECFR_SEARCH_DATABASE !== "false";
 const DATABASE_NODE_LIMIT = Number(process.env.ECFR_SEARCH_NODE_LIMIT || 50000);
 
@@ -53,6 +54,7 @@ const STOP_WORDS = new Set([
 ]);
 
 let indexCache;
+let evaluationCache;
 let sourceDatabaseLoadWarningLogged = false;
 let ecfrDatabaseLoadWarningLogged = false;
 
@@ -156,6 +158,198 @@ function dateValue(value) {
   if (!value) return "";
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value).slice(0, 10);
+}
+
+function extractPrescribedBy(node) {
+  const text = `${node.prescription || ""} ${node.bodyText || ""}`;
+  const match = text.match(/\bas prescribed in\s+([0-9]{1,4}\.[0-9]{1,4}(?:-[0-9]{1,4})?(?:\([a-z0-9]+\))?)/i);
+  return match ? match[1] : "";
+}
+
+function familyForPart(part) {
+  const value = Number.parseInt(String(part || ""), 10);
+  if (value >= 5301 && value <= 5353) return "DAFFARS";
+  if (value >= 201 && value <= 253) return "DFARS";
+  if (value >= 1 && value <= 53) return "FAR";
+  return "Source";
+}
+
+function farPartForNode(node) {
+  const part = Number.parseInt(String(node.part || ""), 10);
+  if (!Number.isFinite(part)) return "";
+  if (part >= 5301 && part <= 5353) return String(part - 5300);
+  if (part >= 201 && part <= 253) return String(part - 200);
+  if (part >= 1 && part <= 53) return String(part);
+  return String(node.part || "");
+}
+
+function versionLabel(node) {
+  const regime = String(node.regime || "").toLowerCase();
+  if (regime.includes("proposed")) return "proposed";
+  if (regime.includes("overhaul")) return "overhaul deviation";
+  if (regime.includes("history")) return "pre-overhaul";
+  if (node.snapshotType === "historical") return "pre-overhaul";
+  return "current";
+}
+
+function versionNote(node) {
+  const label = versionLabel(node);
+  if (label === "proposed") return "Federal Register proposed-rule source. Verify whether it has become final before using it.";
+  if (label === "overhaul deviation") return "FAR Overhaul or model-deviation source. Verify agency adoption and date before relying on it.";
+  if (label === "pre-overhaul") return "Historical eCFR source. Use for comparison and date-sensitive review.";
+  return `Current indexed ${node.regime || "public regulatory"} source.`;
+}
+
+function buildVersions(node, index) {
+  const sameCitation = index.nodes
+    .filter((candidate) => candidate.citationKey === node.citationKey)
+    .map((candidate) => ({
+      label: versionLabel(candidate),
+      date: candidate.effectiveDate || candidate.snapshotDate || candidate.retrievedAt || "indexed source",
+      note: versionNote(candidate),
+      sourceUrl: candidate.sourceUrl
+    }));
+  const unique = [];
+  const seen = new Set();
+  for (const version of sameCitation) {
+    const key = `${version.label}-${version.date}-${version.sourceUrl}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(version);
+    }
+  }
+  return unique.length
+    ? unique.slice(0, 8)
+    : [
+        {
+          label: versionLabel(node),
+          date: node.effectiveDate || node.retrievedAt || "indexed source",
+          note: versionNote(node),
+          sourceUrl: node.sourceUrl
+        }
+      ];
+}
+
+function contextChecklist(node, context) {
+  const text = `${node.title || ""} ${node.bodyText || ""} ${node.prescription || ""}`.toLowerCase();
+  const checks = [
+    ["Acquisition type", context.acquisitionType, "supply|service|construction|research|development|r&d"],
+    ["Commerciality", context.commerciality, "commercial|noncommercial|commercial product|commercial service"],
+    ["Value band", context.valueBand, "micro-purchase|simplified acquisition|threshold|\\$|dollar"],
+    ["Competition", context.competition, "full and open|set-aside|sole source|single source|competition"],
+    ["Funding layer", context.fundingLayer, "air force|department of the air force|dod|defense"],
+    ["Urgency", context.urgency, "urgent|emergency|unusual and compelling"]
+  ];
+  return checks.map(([label, value, fallbackPattern]) => {
+    const known = value && value !== "Not sure" && value !== "Normal";
+    const cue = String(value || "").toLowerCase().split(" ")[0];
+    const explicit = known && (text.includes(cue) || new RegExp(fallbackPattern, "i").test(text));
+    return {
+      label,
+      value: value || "Not sure",
+      status: !known ? "unknown" : explicit ? "met by text signal" : "not explicit in retrieved text",
+      explanation: !known
+        ? "The user did not provide this fact."
+        : explicit
+          ? "The retrieved text contains a matching applicability signal."
+          : "The retrieved text does not make this condition explicit. A human reviewer should verify."
+    };
+  });
+}
+
+function buildAirForceStack(node) {
+  const farPart = farPartForNode(node);
+  return [
+    {
+      label: `FAR Part ${farPart || "unknown"}`,
+      status: familyForPart(node.part) === "FAR" ? "Result is in the base FAR layer" : "Base layer to inspect",
+      url: farPart ? `https://www.acquisition.gov/far/part-${farPart}` : "https://www.acquisition.gov/far"
+    },
+    {
+      label: `DFARS Part ${farPart ? Number(farPart) + 200 : "unknown"}`,
+      status: familyForPart(node.part) === "DFARS" ? "Result is in the DoD supplement layer" : "DoD supplement counterpart",
+      url: farPart ? `https://www.acquisition.gov/dfars/part-${Number(farPart) + 200}` : "https://www.acquisition.gov/dfars"
+    },
+    {
+      label: `DAFFARS Part ${farPart ? Number(farPart) + 5300 : "unknown"}`,
+      status: familyForPart(node.part) === "DAFFARS" ? "Result is in the Air Force supplement layer" : "Air Force supplement counterpart",
+      url: farPart ? `https://www.acquisition.gov/daffars/part-${Number(farPart) + 5300}` : "https://www.acquisition.gov/daffars"
+    },
+    {
+      label: "DAFFARS MP",
+      status: "Check Mandatory Procedures when local process detail matters",
+      url: "https://www.acquisition.gov/daffars"
+    }
+  ];
+}
+
+function buildClausePassport(node, context, index) {
+  const prescribedBy = extractPrescribedBy(node);
+  const versions = buildVersions(node, index);
+  const checklist = contextChecklist(node, context);
+  const missingFacts = checklist.filter((item) => item.status === "unknown").map((item) => item.label);
+  const text = `${node.title || ""} ${node.bodyText || ""} ${node.prescription || ""}`;
+  return {
+    origin: node.regime || "Public source",
+    sourceUrl: node.sourceUrl,
+    retrievedAt: node.retrievedAt || "",
+    effectiveDate: node.effectiveDate || node.snapshotDate || "",
+    versionStatus: versionLabel(node),
+    prescribedBy,
+    appliesWhen: node.prescription || "No prescription was extracted. Use the indexed text and source link for reviewer verification.",
+    doesNotApplyWhen:
+      "Facts differ from the prescription, the action uses a different version date, or a FAR, DFARS, DAFFARS, or deviation source changes the analysis.",
+    missingFacts,
+    checklist,
+    airForceStack: buildAirForceStack(node),
+    diff: {
+      status: versions.length > 1 ? "comparison available" : "single indexed state",
+      summary:
+        versions.length > 1
+          ? "Multiple indexed states exist for this citation. Compare source dates and labels before treating the current text as controlling."
+          : "Only one indexed state is available for this result. Use the source link for full verification.",
+      beforeLabel: versions.find((item) => item.label === "pre-overhaul")?.date || "",
+      afterLabel: versions.find((item) => item.label !== "pre-overhaul")?.date || node.effectiveDate || "",
+      textSignals: [
+        text.includes("shall") ? "Mandatory-language signal found in retrieved text." : "No strong mandatory-language signal found in the retrieved text excerpt.",
+        text.includes("commercial") ? "Commerciality signal found." : "Commerciality is not explicit in the retrieved text excerpt.",
+        text.includes("threshold") ? "Threshold signal found." : "Threshold signal is not explicit in the retrieved text excerpt."
+      ]
+    },
+    redTeamChecks: [
+      "Is this a clause, provision, prescription, policy section, deviation, or proposed-rule source?",
+      "Does the solicitation or award date match the version shown?",
+      "Does a DFARS, DAFFARS, or Mandatory Procedure layer add or limit the base FAR authority?",
+      "Which user-provided facts remain unknown or only weakly matched?",
+      "Would a contracting officer still need a separate source, threshold, or file-documentation decision?"
+    ]
+  };
+}
+
+async function loadEvaluationSummary() {
+  if (evaluationCache) return evaluationCache;
+  try {
+    const raw = await readFile(ACCURACY_CASES_PATH, "utf8");
+    const cases = JSON.parse(raw);
+    evaluationCache = {
+      label: "Local gold-set harness",
+      cases: cases.length,
+      lastRun: "latest backend test run",
+      topOneCases: cases.filter((item) => item.expectedTopOne?.length).length,
+      topFiveCases: cases.filter((item) => item.expectedTopFive?.length).length,
+      note: "Use npm --prefix backend test before demos. The public UI reports the harness size, not a compliance certification."
+    };
+  } catch {
+    evaluationCache = {
+      label: "Local gold-set harness",
+      cases: 0,
+      lastRun: "",
+      topOneCases: 0,
+      topFiveCases: 0,
+      note: "Accuracy case file was unavailable."
+    };
+  }
+  return evaluationCache;
 }
 
 function rowToNode(row) {
@@ -507,24 +701,13 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
         mightNotApply:
           "This is a candidate authority, not a compliance verdict. Verify the prescription, dates, agency supplements, and contract facts.",
         version: {
-          label: "current",
-          effectiveStart: item.node.effectiveDate || ""
+          label: versionLabel(item.node),
+          effectiveStart: item.node.effectiveDate || item.node.snapshotDate || ""
         },
-        versions: [
-          {
-            label: "current",
-            date: item.node.effectiveDate || "current indexed source",
-            note: `Current indexed ${item.node.regime || "regulatory"} source.`,
-            sourceUrl: item.node.sourceUrl
-          }
-        ],
         related: item.node.related || [],
-        supplementChain: [
-          { label: item.node.citation, status: `${item.node.regime || "Source"} hit`, url: item.node.sourceUrl },
-          { label: "FAR", status: "Indexed", url: "https://www.acquisition.gov/far" },
-          { label: "DFARS", status: "Indexed", url: "https://www.acquisition.gov/dfars" },
-          { label: "DAFFARS", status: "Indexed", url: "https://www.acquisition.gov/daffars" }
-        ]
+        supplementChain: buildAirForceStack(item.node),
+        clausePassport: buildClausePassport(item.node, inferredContext, index),
+        versions: buildVersions(item.node, index)
       };
     });
 
@@ -546,11 +729,13 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
 
 export async function getMeta() {
   const index = await loadIndex();
+  const evaluation = await loadEvaluationSummary();
   return {
     generatedAt: index.generatedAt,
     sourceBaseUrl: index.sourceBaseUrl,
     totalNodes: index.nodes.length,
     parts: index.parts || [],
-    sourceStats: index.sourceStats || {}
+    sourceStats: index.sourceStats || {},
+    evaluation
   };
 }

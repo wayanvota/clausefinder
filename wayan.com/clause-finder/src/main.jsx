@@ -4,6 +4,14 @@ import { contextOptions, examples } from "./data";
 import "./styles.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+const SOURCE_LINKS = [
+  ["FAR", "Current FAR text", "https://www.acquisition.gov/far"],
+  ["DFARS", "DoD supplement", "https://www.acquisition.gov/dfars"],
+  ["DAFFARS", "Air Force supplement", "https://www.acquisition.gov/daffars"],
+  ["FAR Overhaul", "Deviation and companion material", "https://www.acquisition.gov/far-overhaul"],
+  ["eCFR Title 48", "Current and point-in-time CFR text", "https://www.ecfr.gov/current/title-48"],
+  ["Federal Register", "Proposed-rule notices", "https://www.federalregister.gov/documents/search?conditions%5Bterm%5D=Federal+Acquisition+Regulation+Revolutionary"]
+];
 
 function detectSensitive(value) {
   const text = String(value || "").toLowerCase();
@@ -28,6 +36,13 @@ function versionClass(label) {
 function truncate(value, max = 1100) {
   const text = String(value || "");
   return text.length > max ? `${text.slice(0, max).trim()}...` : text;
+}
+
+function statusClass(value) {
+  const status = String(value || "").toLowerCase();
+  if (status.includes("met")) return "met";
+  if (status.includes("unknown")) return "unknown";
+  return "miss";
 }
 
 function downloadJson(payload) {
@@ -80,7 +95,10 @@ function Header({ activePage, setActivePage, meta, onExport }) {
         ))}
       </nav>
       <div className="header-actions">
-        <span>{meta?.totalNodes ? `${meta.totalNodes.toLocaleString()} indexed nodes` : "Loading corpus"}</span>
+        <span>
+          {meta?.totalNodes ? `${meta.totalNodes.toLocaleString()} indexed nodes` : "Loading corpus"}
+          {meta?.sourceStats?.sourceDatabaseNodes ? " from Neon" : ""}
+        </span>
         <button className="secondary-button" type="button" onClick={onExport}>
           Export session
         </button>
@@ -95,7 +113,7 @@ function GuardrailStrip() {
       <strong>Decision support only</strong>
       <span>Public regulatory sources only</span>
       <span>No compliance verdicts</span>
-      <span>Every result links to Acquisition.gov</span>
+      <span>Every result links to a public source</span>
     </section>
   );
 }
@@ -233,6 +251,7 @@ function ScoreBar({ label, value }) {
 
 function ResultCard({ result, index, selected, onSelect, feedback, setFeedback }) {
   const vote = feedback?.vote || "";
+  const missing = result.clausePassport?.missingFacts?.length || 0;
   return (
     <article className={`result-card ${selected ? "selected" : ""}`}>
       <button className="result-main" type="button" onClick={() => onSelect(result.id)}>
@@ -245,8 +264,10 @@ function ResultCard({ result, index, selected, onSelect, feedback, setFeedback }
           </div>
           <div className="version-row">
             <span className={versionClass(result.version?.label)}>{result.version?.label || "current"}</span>
+            <span className="version">{result.regime}</span>
             <span className="version">{result.type}</span>
             <span className="version">Part {result.part}</span>
+            {missing > 0 && <span className="version version-warning">{missing} facts unknown</span>}
           </div>
           <p>{result.whyRelevant}</p>
           <div className="score-grid">
@@ -346,37 +367,105 @@ function AnswerPanel({ answer }) {
 }
 
 function ApplicabilityChecks({ result, context }) {
-  const body = `${result.title} ${result.bodyText || ""}`.toLowerCase();
-  const checks = [
-    ["Acquisition type", context.acquisitionType],
-    ["Commerciality", context.commerciality],
-    ["Value band", context.valueBand],
-    ["Funding layer", context.fundingLayer],
-    ["Urgency", context.urgency]
+  const checks = result.clausePassport?.checklist || [
+    { label: "Acquisition type", value: context.acquisitionType, status: "unknown", explanation: "No checklist data returned." },
+    { label: "Commerciality", value: context.commerciality, status: "unknown", explanation: "No checklist data returned." },
+    { label: "Value band", value: context.valueBand, status: "unknown", explanation: "No checklist data returned." },
+    { label: "Funding layer", value: context.fundingLayer, status: "unknown", explanation: "No checklist data returned." },
+    { label: "Urgency", value: context.urgency, status: "unknown", explanation: "No checklist data returned." }
   ];
   return (
     <div className="check-list">
-      {checks.map(([label, value]) => {
-        const known = value !== "Not sure" && value !== "Normal";
-        const cue = String(value).toLowerCase().split(" ")[0];
-        const met = known && body.includes(cue);
-        return (
-          <div className="check-row" key={label}>
-            <span>{label}</span>
-            <strong className={!known ? "unknown" : met ? "met" : "miss"}>
-              {!known ? "unknown" : met ? "text match" : "not explicit"}
-            </strong>
-            <small>{value}</small>
-          </div>
-        );
-      })}
+      {checks.map((item) => (
+        <div className="check-row" key={item.label}>
+          <span>{item.label}</span>
+          <strong className={statusClass(item.status)}>{item.status}</strong>
+          <small>{item.value}. {item.explanation}</small>
+        </div>
+      ))}
     </div>
   );
 }
 
+function ClausePassport({ result }) {
+  const passport = result.clausePassport || {};
+  const items = [
+    ["Origin", passport.origin || result.regime],
+    ["Version status", passport.versionStatus || result.version?.label || "current"],
+    ["Retrieved", passport.retrievedAt || result.retrievedAt || "indexed source"],
+    ["Effective date", passport.effectiveDate || result.version?.effectiveStart || "not explicit"],
+    ["Prescribed by", passport.prescribedBy || "not extracted"],
+    ["Missing facts", passport.missingFacts?.length ? passport.missingFacts.join(", ") : "none flagged"]
+  ];
+  return (
+    <section className="detail-section">
+      <h3>Clause Passport</h3>
+      <div className="passport-grid">
+        {items.map(([label, value]) => (
+          <div className="passport-item" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+          </div>
+        ))}
+      </div>
+      <h3>Applies when</h3>
+      <p>{passport.appliesWhen}</p>
+      <h3>May not apply when</h3>
+      <p>{passport.doesNotApplyWhen}</p>
+    </section>
+  );
+}
+
+function DiffView({ result }) {
+  const diff = result.clausePassport?.diff;
+  return (
+    <section className="detail-section">
+      <h3>2026 version comparison</h3>
+      <p>{diff?.summary || "No comparison metadata was returned for this result."}</p>
+      <div className="diff-grid">
+        <div>
+          <span>Earlier state</span>
+          <strong>{diff?.beforeLabel || "not indexed"}</strong>
+        </div>
+        <div>
+          <span>Current or proposed state</span>
+          <strong>{diff?.afterLabel || result.version?.effectiveStart || "indexed source"}</strong>
+        </div>
+      </div>
+      <h3>Operational text signals</h3>
+      <ul className="compact-list">
+        {(diff?.textSignals || []).map((signal) => (
+          <li key={signal}>{signal}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function RedTeamView({ result }) {
+  return (
+    <section className="detail-section">
+      <h3>Challenge this result</h3>
+      <p>
+        Use these checks before treating this candidate as useful for a contract
+        file or reviewer discussion.
+      </p>
+      <div className="check-list">
+        {(result.clausePassport?.redTeamChecks || []).map((item) => (
+          <div className="check-row" key={item}>
+            <span>{item}</span>
+            <strong className="unknown">review</strong>
+            <small>Human verification required.</small>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function VerificationPanel({ result, context, feedback, setFeedback }) {
-  const [tab, setTab] = useState("Text");
-  useEffect(() => setTab("Text"), [result?.id]);
+  const [tab, setTab] = useState("Passport");
+  useEffect(() => setTab("Passport"), [result?.id]);
 
   if (!result) {
     return (
@@ -407,7 +496,7 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
       </div>
 
       <div className="tab-row" role="tablist" aria-label="Verification details">
-        {["Text", "Prescription", "Hierarchy", "Timeline"].map((item) => (
+        {["Passport", "Text", "Prescription", "Hierarchy", "Timeline", "Diff", "Challenge"].map((item) => (
           <button
             key={item}
             type="button"
@@ -418,6 +507,8 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
           </button>
         ))}
       </div>
+
+      {tab === "Passport" && <ClausePassport result={result} />}
 
       {tab === "Text" && (
         <section className="detail-section">
@@ -437,7 +528,7 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
       {tab === "Prescription" && (
         <section className="detail-section">
           <h3>Prescription or policy signal</h3>
-          <p>{result.prescription || "No prescription phrase was extracted for this node."}</p>
+          <p>{result.clausePassport?.appliesWhen || result.prescription || "No prescription phrase was extracted for this node."}</p>
           <h3>Applicability checks</h3>
           <ApplicabilityChecks result={result} context={context} />
         </section>
@@ -447,8 +538,9 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
         <section className="detail-section">
           <h3>Regulatory path</h3>
           <p>{result.hierarchyPath}</p>
+          <h3>Air Force stack</h3>
           <div className="chain">
-            {result.supplementChain?.map((item) => (
+            {(result.clausePassport?.airForceStack || result.supplementChain || []).map((item) => (
               <a href={item.url} target="_blank" rel="noreferrer" key={item.label}>
                 <strong>{item.label}</strong>
                 <span>{item.status}</span>
@@ -470,6 +562,10 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
           </div>
         </section>
       )}
+
+      {tab === "Diff" && <DiffView result={result} />}
+
+      {tab === "Challenge" && <RedTeamView result={result} />}
 
       {tab === "Timeline" && (
         <section className="detail-section">
@@ -515,6 +611,25 @@ function AboutPage() {
         reviewer, journalist, or policy analyst can paste a plain-language
         acquisition question and quickly find likely sections or clauses to inspect.
       </p>
+      <div className="callout-grid">
+        <div>
+          <h3>Built by User</h3>
+          <p>
+            This project demonstrates a procurement-aware tool built by a subject
+            matter user with Codex, public sources, OpenAI API support, Render,
+            and Neon. The point is not replacing contracting officers. The point
+            is giving them an auditable first-pass research aid they can challenge.
+          </p>
+        </div>
+        <div>
+          <h3>NCMA demo posture</h3>
+          <p>
+            The tool is designed to show provenance, version state, source layer,
+            and unresolved facts. That makes it safer for a conference demo than
+            a general chatbot that hides its retrieval and reasoning steps.
+          </p>
+        </div>
+      </div>
     </main>
   );
 }
@@ -539,6 +654,16 @@ function MethodPage({ meta }) {
         coverage is still version metadata, and FAR Overhaul deviation extraction
         still needs a reviewer-grade text pipeline before operational use.
       </p>
+      <div className="eval-grid method-eval">
+        <div className="eval-item">
+          <strong>{meta?.evaluation?.cases || 0} test questions</strong>
+          <p>{meta?.evaluation?.label || "Evaluation harness"}</p>
+        </div>
+        <div className="eval-item">
+          <strong>{meta?.evaluation?.topOneCases || 0} top-1 checks</strong>
+          <p>{meta?.evaluation?.note || "Run backend tests before demo use."}</p>
+        </div>
+      </div>
     </main>
   );
 }
@@ -555,7 +680,23 @@ function SourcesPage({ meta }) {
         provides one.
       </p>
       <div className="source-grid">
-        {(meta?.parts || []).map((part) => (
+        {SOURCE_LINKS.map(([label, note, url]) => (
+          <a href={url} target="_blank" rel="noreferrer" key={label}>
+            <strong>{label}</strong>
+            <span>{note}</span>
+            <small>{url}</small>
+          </a>
+        ))}
+      </div>
+      <h3 className="section-label">Indexed source stats</h3>
+      <div className="source-grid">
+        {Object.entries(meta?.sourceStats || {}).map(([label, count]) => (
+          <div className="source-stat" key={label}>
+            <strong>{label}</strong>
+            <span>{Number(count).toLocaleString()} nodes</span>
+          </div>
+        ))}
+        {(meta?.parts || []).slice(0, 20).map((part) => (
           <a href={part.url} target="_blank" rel="noreferrer" key={part.part}>
             <strong>{part.regime || "Source"} {part.part}</strong>
             <span>{part.nodes} indexed nodes</span>
@@ -737,13 +878,17 @@ function App() {
     downloadJson({
       app: "ClauseFinder",
       urlPath: "/clause-finder/",
+      packetType: "Reviewer Packet",
       question,
       context: responseContext,
       results: results.map((result) => ({
         citation: result.citation,
         title: result.title,
+        regime: result.regime,
+        version: result.version,
         score: result.score,
         sourceUrl: result.sourceUrl,
+        clausePassport: result.clausePassport,
         feedback: feedback[result.id] || null
       })),
       feedback,

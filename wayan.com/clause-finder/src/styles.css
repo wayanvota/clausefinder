@@ -416,6 +416,15 @@ select {
   color: var(--good);
 }
 
+.version-warning,
+.version-proposed,
+.version-overhaul-deviation,
+.version-pre-overhaul {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  background: color-mix(in srgb, var(--warn) 10%, #ffffff);
+  color: var(--warn);
+}
+
 .result-copy p,
 .detail-section p,
 .footer-note {
@@ -514,7 +523,7 @@ meter::-webkit-meter-optimum-value {
 .tab-row {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -549,7 +558,10 @@ meter::-webkit-meter-optimum-value {
 .chain,
 .timeline,
 .source-grid,
-.eval-grid {
+.eval-grid,
+.passport-grid,
+.diff-grid,
+.callout-grid {
   display: grid;
   gap: 8px;
 }
@@ -588,7 +600,11 @@ meter::-webkit-meter-optimum-value {
 .related-list a,
 .timeline a,
 .source-grid a,
-.eval-item {
+.eval-item,
+.source-stat,
+.passport-item,
+.diff-grid div,
+.callout-grid div {
   display: grid;
   gap: 5px;
   border: 1px solid var(--border);
@@ -601,7 +617,11 @@ meter::-webkit-meter-optimum-value {
 .chain a strong,
 .related-list a,
 .timeline a strong,
-.source-grid strong {
+.source-grid strong,
+.source-stat strong,
+.passport-item strong,
+.diff-grid strong,
+.callout-grid h3 {
   color: var(--text);
 }
 
@@ -609,9 +629,26 @@ meter::-webkit-meter-optimum-value {
 .related-list a span,
 .timeline a span,
 .timeline a small,
-.source-grid small {
+.source-grid small,
+.source-stat span,
+.passport-item span,
+.diff-grid span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.passport-grid,
+.diff-grid,
+.callout-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compact-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .review-note {
@@ -638,6 +675,11 @@ meter::-webkit-meter-optimum-value {
 
 .eval-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.method-eval {
+  max-width: 780px;
+  margin-top: 22px;
 }
 
 .eval-item p {
@@ -739,6 +781,24 @@ meter::-webkit-meter-optimum-value {
   margin-top: 28px;
 }
 
+.page-panel h3,
+.section-label {
+  margin-top: 28px;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.callout-grid {
+  max-width: 980px;
+  margin-top: 24px;
+}
+
+.callout-grid p {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
 @media (max-width: 1180px) {
   .workspace {
     grid-template-columns: 320px 1fr;
@@ -749,7 +809,10 @@ meter::-webkit-meter-optimum-value {
     min-height: auto;
   }
 
-  .source-grid {
+  .source-grid,
+  .passport-grid,
+  .diff-grid,
+  .callout-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -778,6 +841,9 @@ meter::-webkit-meter-optimum-value {
   .lower-grid,
   .eval-grid,
   .source-grid,
+  .passport-grid,
+  .diff-grid,
+  .callout-grid,
   .clarify-grid {
     grid-template-columns: 1fr;
   }
@@ -789,7 +855,8 @@ meter::-webkit-meter-optimum-value {
   }
 
   .score-grid,
-  .chain {
+  .chain,
+  .tab-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

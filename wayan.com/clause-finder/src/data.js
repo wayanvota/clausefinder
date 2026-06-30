@@ -25,7 +25,7 @@ export const contextOptions = {
 export const examples = [
   {
     id: "sam-overhaul",
-    label: "SAM registration",
+    label: "SAM change",
     question: "What changed about SAM registration under the FAR overhaul?",
     context: {
       acquisitionType: "Service",
@@ -38,7 +38,7 @@ export const examples = [
   },
   {
     id: "supply-9000",
-    label: "9,000 dollar buy",
+    label: "$9,000 supply buy",
     question: "I have a 9,000 dollar supply buy, what are my options?",
     context: {
       acquisitionType: "Supply",
@@ -51,8 +51,47 @@ export const examples = [
   },
   {
     id: "cyber",
-    label: "Cybersecurity",
+    label: "DoD cyber clause",
     question: "Which FAR clauses are relevant for safeguarding covered contractor information systems?",
+    context: {
+      acquisitionType: "Service",
+      commerciality: "Not sure",
+      valueBand: "Above simplified acquisition threshold",
+      competition: "Not sure",
+      fundingLayer: "Air Force",
+      urgency: "Normal"
+    }
+  },
+  {
+    id: "commercial-service-sat",
+    label: "Commercial service",
+    question: "Commercial service above the simplified acquisition threshold, which clauses should I inspect first?",
+    context: {
+      acquisitionType: "Service",
+      commerciality: "Commercial",
+      valueBand: "Above simplified acquisition threshold",
+      competition: "Full and open",
+      fundingLayer: "Air Force",
+      urgency: "Normal"
+    }
+  },
+  {
+    id: "live-animals",
+    label: "Live animal training",
+    question: "Can an Air Force contract include training that uses live vertebrate animals, and what clause should I inspect?",
+    context: {
+      acquisitionType: "Service",
+      commerciality: "Commercial",
+      valueBand: "Above simplified acquisition threshold",
+      competition: "Full and open",
+      fundingLayer: "Air Force",
+      urgency: "Normal"
+    }
+  },
+  {
+    id: "version-date",
+    label: "Which version?",
+    question: "Which version applies if a solicitation was issued before the FAR overhaul but award happens after the proposed rule?",
     context: {
       acquisitionType: "Service",
       commerciality: "Not sure",

@@ -9,6 +9,12 @@ const sam = await searchFar({ query: "What changed about SAM registration?", lim
 if (!sam.results.length) {
   throw new Error("Expected SAM query to return at least one result.");
 }
+if (!sam.results[0].clausePassport?.airForceStack?.length) {
+  throw new Error("Expected top result to include Clause Passport and Air Force stack metadata.");
+}
+if (!meta.evaluation?.cases) {
+  throw new Error("Expected meta endpoint data to include the evaluation harness summary.");
+}
 
 const threshold = await searchFar({
   query: "I have a 9000 dollar supply buy, what are my options?",
@@ -29,7 +35,9 @@ console.log(
     {
       ok: true,
       totalNodes: meta.totalNodes,
+      evaluationCases: meta.evaluation.cases,
       samTop: sam.results[0].citation,
+      samPassport: Boolean(sam.results[0].clausePassport),
       thresholdTop: threshold.results[0].citation,
       sensitiveHits: sensitive.sensitiveHits
     },
