@@ -1,0 +1,1840 @@
+{
+  "generatedAt": "2026-07-03T19:59:31.091Z",
+  "posture": "credibility",
+  "claim": "ClauseFinder reports live source coverage and reviewer-signoff gaps. Partial or inferred coverage is labeled instead of presented as complete.",
+  "sources": {
+    "farOverhaul": {
+      "sourceUrl": "https://www.acquisition.gov/far-overhaul",
+      "status": "checked",
+      "pageBytes": 75030,
+      "totalLinks": 85,
+      "candidateDocuments": 34,
+      "categoryCounts": {
+        "overhaul_deviation_material": 8,
+        "other": 19,
+        "policy_guidance": 4,
+        "category_management_buying_guide": 1,
+        "practitioner_album": 1,
+        "faq": 1
+      },
+      "documents": [
+        {
+          "url": "https://www.acquisition.gov/far-overhaul#main-content",
+          "label": "Skip to main content",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul",
+          "label": "FAR Overhaul",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/browse/index/far",
+          "label": "FAR",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/browse/index/far"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/dfars",
+          "label": "DFARS",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/dfars"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/dfarspgi",
+          "label": "DFARSPGI",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/dfarspgi"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/afars",
+          "label": "AFARS",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/afars"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/daffars",
+          "label": "DAFFARS",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/daffars"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/daffars/mp",
+          "label": "DAFFARS MP",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/daffars/mp"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/sofars",
+          "label": "SOFARS",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/sofars"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/transfars",
+          "label": "TRANSFARS",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/transfars"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/lifar",
+          "label": "LIFAR",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/lifar"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/archives?type=FAR",
+          "label": "Archives",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/archives?type=FAR"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/search/advanced?keys=&page=0&sort_by=search_api_relevance&sort_order=DESC&type%5Bfar_dita%5D=far_dita",
+          "label": "Regulations Search",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/search/advanced?keys=&page=0&sort_by=search_api_relevance&sort_order=DESC&type%5Bfar_dita%5D=far_dita"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/policy-network",
+          "label": "Policy Network",
+          "category": "policy_guidance",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/policy-network"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-council",
+          "label": "FAR Council",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-council"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul/far-part-deviation-guide",
+          "label": "View Parts",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul/far-part-deviation-guide"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/sites/default/files/page_file_uploads/far-companion.pdf",
+          "label": "Read Companion",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/pdf",
+            "finalUrl": "https://www.acquisition.gov/sites/default/files/page_file_uploads/far-companion.pdf"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/sites/default/files/page_file_uploads/category-management-buying-guide.pdf",
+          "label": "View Guide",
+          "category": "category_management_buying_guide",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/pdf",
+            "finalUrl": "https://www.acquisition.gov/sites/default/files/page_file_uploads/category-management-buying-guide.pdf"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul/practitioner-albums",
+          "label": "Explore Albums",
+          "category": "practitioner_album",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul/practitioner-albums"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/sites/default/files/page_file_uploads/RFO.pdf",
+          "label": "View PDF",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/pdf",
+            "finalUrl": "https://www.acquisition.gov/sites/default/files/page_file_uploads/RFO.pdf"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul/faqs",
+          "label": "View FAQs",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul/faqs"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul/policy-and-guidance",
+          "label": "Policy & Guidance",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul/policy-and-guidance"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/gsar-overhaul",
+          "label": "GSAR Overhaul",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/gsar-overhaul"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-overhaul/you-said-we-did",
+          "label": "Feedback Matrix",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-overhaul/you-said-we-did"
+          }
+        },
+        {
+          "url": "https://www.whitehouse.gov/releases/2026/06/omb-advances-revolutionary-far-overhaul-with-formal-publication-of-regulatory-changes/",
+          "label": "Press Release: OMB Advances Revolutionary FAR Overhaul with Formal Publication of Regulatory Changes",
+          "category": "overhaul_deviation_material",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.whitehouse.gov/releases/2026/06/omb-advances-revolutionary-far-overhaul-with-formal-publication-of-regulatory-changes/"
+          }
+        },
+        {
+          "url": "https://www.whitehouse.gov/briefings-statements/2025/08/the-office-of-federal-procurement-policy-launches-landmark-update-to-far-ushering-in-a-new-era-for-commercial-buying/",
+          "label": "Press Release: Landmark Update to FAR, Ushering in a New Era for Commercial Buying",
+          "category": "policy_guidance",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.whitehouse.gov/briefings-statements/2025/08/the-office-of-federal-procurement-policy-launches-landmark-update-to-far-ushering-in-a-new-era-for-commercial-buying/"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/sites/default/files/page_file_uploads/OFPP_RFO_Crowdsourcing_Campaign_Invite.pdf",
+          "label": "Invitation: What Happens Next on the RFO? ",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "application/pdf",
+            "finalUrl": "https://www.acquisition.gov/sites/default/files/page_file_uploads/OFPP_RFO_Crowdsourcing_Campaign_Invite.pdf"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/far-council",
+          "label": "Federal Acquisition Regulatory Council",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/far-council"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/search/advanced?keys=&page=0&sort_by=search_api_relevance&sort_order=DESC&type%5Bfar_dita%5D=far_dita",
+          "label": "Search",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/search/advanced?keys=&page=0&sort_by=search_api_relevance&sort_order=DESC&type%5Bfar_dita%5D=far_dita"
+          }
+        },
+        {
+          "url": "https://www.gsa.gov/policy-regulations/policy/acquisition-policy/office-of-acquisition-policy/governmentwide-acq-policy/regulatory-secretariat-division#farnews",
+          "label": "Sign up for FAR News",
+          "category": "policy_guidance",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.gsa.gov/policy-regulations/policy/acquisition-policy/office-of-acquisition-policy/governmentwide-acq-policy/regulatory-secretariat-division"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/Far_Resources",
+          "label": "FAR Resources",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.acquisition.gov/content/far-resources"
+          }
+        },
+        {
+          "url": "https://www.acquisition.gov/form/contact-us",
+          "label": "Contact Us/FAQs",
+          "category": "faq",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://login.acquisition.gov/contact-us"
+          }
+        },
+        {
+          "url": "https://www.gsa.gov/reference/reports/budget-performance",
+          "label": "Performance reports",
+          "category": "other",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.gsa.gov/about-gsa/newsroom/budget-and-performance"
+          }
+        },
+        {
+          "url": "https://www.gsa.gov/website-information/website-policies",
+          "label": "Privacy policy",
+          "category": "policy_guidance",
+          "verification": {
+            "ok": true,
+            "status": 200,
+            "contentType": "text/html; charset=UTF-8",
+            "finalUrl": "https://www.gsa.gov/website-information/website-policies"
+          }
+        }
+      ],
+      "gaps": [
+        "Link inventory does not prove a document is fully parsed.",
+        "Line-out styling and model-deviation effective dates still require document-level parsing.",
+        "Agency adoption is not inferred from the FAR Overhaul page."
+      ]
+    },
+    "ecfr": {
+      "documentationUrl": "https://www.ecfr.gov/developers/documentation/api/v1",
+      "title48": {
+        "name": "Federal Acquisition Regulations System",
+        "latestIssueDate": "2026-06-02",
+        "latestAmendedOn": "2026-05-07",
+        "upToDateAsOf": "2026-07-01"
+      },
+      "versionsEndpoint": {
+        "sourceUrl": "https://www.ecfr.gov/api/versioner/v1/versions/title-48.json",
+        "totalPages": "28",
+        "firstPageRecords": 1000
+      },
+      "sampleFullText": {
+        "sourceUrl": "https://www.ecfr.gov/api/versioner/v1/full/2026-07-01/title-48.xml?part=4",
+        "verification": {
+          "ok": true,
+          "status": 200,
+          "contentType": "application/xml; charset=utf-8",
+          "finalUrl": "https://www.ecfr.gov/api/versioner/v1/full/2026-07-01/title-48.xml?part=4"
+        }
+      },
+      "gaps": [
+        "Point-in-time snapshots must be cached by date and part before vintage lookup is complete.",
+        "Section-level amendment records require reviewer spot checks against current source pages."
+      ]
+    },
+    "federalRegister": {
+      "documentationUrl": "https://www.federalregister.gov/developers/documentation/api/v1",
+      "searchUrl": "https://www.federalregister.gov/api/v1/documents.json?per_page=100&conditions%5Btype%5D%5B%5D=PRORULE&conditions%5Bterm%5D=Federal%20Acquisition%20Regulation%20Revolutionary",
+      "total": 19,
+      "returned": 19,
+      "currentTrancheReturned": 4,
+      "documents": [
+        {
+          "documentNumber": "2026-12562",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 3 and 49",
+          "citation": "91 FR 37698",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12562/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-3-and-49",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12562.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12562.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12562.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0007-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0007-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 4,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0007",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0007",
+            "document_id": "FAR-2026-0007-0001",
+            "regulation_id_number": "9000-AO92",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 3 and 49  (FAR Case 2026-007)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-007, Docket No. FAR-2026-0007, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "3",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "49",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12562.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12561",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 5, 24, and 29",
+          "citation": "91 FR 37676",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12561/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-5-24-and",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12561.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12561.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12561.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0005-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0005-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 5,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0005",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0005",
+            "document_id": "FAR-2026-0005-0001",
+            "regulation_id_number": "9000-AO90",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 5, 24, 29, and 52  (FAR Case 2026-005)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-005, Docket No. FAR-2026-0005, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "5",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "24",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "29",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12561.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12559",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 1, 2, 4, 33, 39, 40, and 53",
+          "citation": "91 FR 37550",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12559/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-1-2-4-33",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12559.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12559.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12559.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0001-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0001-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 16,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0001",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0001",
+            "document_id": "FAR-2026-0001-0001",
+            "regulation_id_number": "9000-AO86",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 1, 2, 4, 33, 39, 40, and 53  (FAR Case 2026-001)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-001, Docket No. FAR-2026-0001, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "1",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "2",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "4",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "33",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "39",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "40",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "53",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12559.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12560",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 6, 7, 10, 18, 26, 37, and 41",
+          "citation": "91 FR 37636",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12560/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-6-7-10-18",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12560.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12560.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12560.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0002-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0002-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 9,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0002",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0002",
+            "document_id": "FAR-2026-0002-0001",
+            "regulation_id_number": "9000-AO87",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 6, 7, 10, 18, 26, 37, and 41 (FAR Case 2026-002)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-002, Docket No. FAR-2026-0002, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "6",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "7",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "10",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "18",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "26",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "37",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "41",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12560.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2025-10609",
+          "title": "Federal Acquisition Regulation: Small Business Innovation Research and Technology Transfer Programs",
+          "citation": "90 FR 24774",
+          "publicationDate": "2025-06-12",
+          "dates": "The proposed rule published on April 7, 2023, at 88 FR 20822, is withdrawn as of June 12, 2025.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2025/06/12/2025-10609/federal-acquisition-regulation-small-business-innovation-research-and-technology-transfer-programs",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2025-06-12/pdf/2025-10609.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2025/06/12/2025-10609.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2025/06/12/2025-10609.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "regulatory_plan": {
+              "html_url": "https://www.federalregister.gov/regulations/9000-AO12/federal-acquisition-regulation-far-far-case-2020-010-small-business-innovation-research-and-technolo",
+              "title": "Federal Acquisition Regulation (FAR); FAR Case 2020-010, Small Business Innovation Research and Technology Transfer Programs"
+            },
+            "comments_count": 0,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2020-0010",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2020-0010",
+            "document_id": "FAR-2020-0010-0008",
+            "regulation_id_number": "9000-AO12",
+            "title": "Federal Acquisition Regulation:  Small Business Innovation Research and Technology Transfer Programs (FAR Case 2020-010)",
+            "checked_regulationsdotgov_at": "2025-06-14T18:55:05Z"
+          },
+          "docketIds": [
+            "FAR Case 2020-010, Docket No. FAR-2020-0010, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "2",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "4",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "6",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "27",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2025-10609.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2024-00476",
+          "title": "Introduction to the Unified Agenda of Federal Regulatory and Deregulatory Actions-Fall 2023",
+          "citation": "89 FR 9292",
+          "publicationDate": "2024-02-09",
+          "dates": "Undetermined.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2024/02/09/2024-00476/introduction-to-the-unified-agenda-of-federal-regulatory-and-deregulatory-actions-fall-2023",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2024-02-09/pdf/2024-00476.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2024/02/09/2024-00476.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2024/02/09/2024-00476.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "RISC",
+            "document_id": "RISC-2024-0001-0001",
+            "checked_regulationsdotgov_at": "2024-02-10T14:00:06Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2024-00476.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2023-02113",
+          "title": "Introduction to the Unified Agenda of Federal Regulatory and Deregulatory Actions-Fall 2022",
+          "citation": "88 FR 10966",
+          "publicationDate": "2023-02-22",
+          "dates": "This action may affect the private sector under PL 104-4.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2023/02/22/2023-02113/introduction-to-the-unified-agenda-of-federal-regulatory-and-deregulatory-actions-fall-2022",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2023-02-22/pdf/2023-02113.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2023/02/22/2023-02113.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2023/02/22/2023-02113.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "RISC",
+            "document_id": "RISC-2023-0001-0001",
+            "checked_regulationsdotgov_at": "2023-02-24T23:08:01Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2023-02113.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2024-24582",
+          "title": "Provisions Pertaining to Preventing Access to U.S. Sensitive Personal Data and Government-Related Data by Countries of Concern or Covered Persons",
+          "citation": "89 FR 86116",
+          "publicationDate": "2024-10-29",
+          "commentsCloseOn": "2024-11-29",
+          "dates": "Written comments on this notice of proposed rulemaking (NPRM) must be received by November 29, 2024.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2024/10/29/2024-24582/provisions-pertaining-to-preventing-access-to-us-sensitive-personal-data-and-government-related-data",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2024-10-29/pdf/2024-24582.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2024/10/29/2024-24582.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2024/10/29/2024-24582.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [
+              {
+                "title": "Joseph Whitlock (BSA and GDA) Email Comment to DOJ and CISA on Data Security NPRM Extension Request (11.20.2024)_Redacted",
+                "document_id": "DOJ-NSD-2024-0004-0101"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.25.2024 4PM EST) (EPIC)",
+                "document_id": "DOJ-NSD-2024-0004-0100"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.25.2024 11AM EST) (PHRMA)",
+                "document_id": "DOJ-NSD-2024-0004-0099"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.26.2024 2.30PM EST) (Chamber of Commerce)",
+                "document_id": "DOJ-NSD-2024-0004-0098"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.26.2024 4.30PM EST) (BSA)",
+                "document_id": "DOJ-NSD-2024-0004-0097"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.25.2024 2.30PM EST) (CIPL)",
+                "document_id": "DOJ-NSD-2024-0004-0096"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.27.2024 11AM EST) (TIA)",
+                "document_id": "DOJ-NSD-2024-0004-0095"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.26.2024 3.30PM EST) (COGR)",
+                "document_id": "DOJ-NSD-2024-0004-0094"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.26.2024 11.30AM EST) (ITI)",
+                "document_id": "DOJ-NSD-2024-0004-0093"
+              },
+              {
+                "title": "Commerce and DOJ Engagement on Data Security Proposed Rule (11.26.2024 1PM EST) (World Privacy Forum)",
+                "document_id": "DOJ-NSD-2024-0004-0092"
+              }
+            ],
+            "regulatory_plan": {
+              "html_url": "https://www.federalregister.gov/regulations/1124-AA01/provisions-regarding-access-to-americans-bulk-sensitive-personal-data-and-government-related-data-by",
+              "title": "Provisions Regarding Access to Americans' Bulk Sensitive Personal Data and Government-Related Data by Countries of Concern"
+            },
+            "comments_count": 81,
+            "agency_id": "DOJ",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=DOJ-NSD-2024-0004",
+            "supporting_documents_count": 24,
+            "docket_id": "DOJ-NSD-2024-0004",
+            "document_id": "DOJ-NSD-2024-0004-0001",
+            "regulation_id_number": "1124-AA01",
+            "title": "Provisions Pertaining to Preventing Access to U.S. Sensitive Personal Data and Government-Related Data by Countries of Concern or Covered Persons",
+            "checked_regulationsdotgov_at": "2024-12-01T02:00:13Z"
+          },
+          "docketIds": [
+            "Docket No. NSD 104"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "202",
+              "title": 28
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2024-24582.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-06963",
+          "title": "Permitted Payment Stablecoin Issuer Anti-Money Laundering/Countering the Financing of Terrorism Program and Sanctions Compliance Program Requirements",
+          "citation": "91 FR 18582",
+          "publicationDate": "2026-04-10",
+          "commentsCloseOn": "2026-06-09",
+          "dates": "Comments must be received by June 9, 2026.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/04/10/2026-06963/permitted-payment-stablecoin-issuer-anti-money-launderingcountering-the-financing-of-terrorism",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-04-10/pdf/2026-06963.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/04/10/2026-06963.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/04/10/2026-06963.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 89,
+            "agency_id": "FINCEN",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FINCEN-2026-0100",
+            "supporting_documents_count": 0,
+            "docket_id": "FINCEN-2026-0100",
+            "document_id": "FINCEN-2026-0100-0001",
+            "regulation_id_number": "1506-AB73",
+            "title": "Permitted Payment Stablecoin Issuer Anti-Money Laundering/Countering the Financing of Terrorism Program and Sanctions Compliance Program Requirements.",
+            "checked_regulationsdotgov_at": "2026-06-19T08:55:03Z"
+          },
+          "docketIds": [
+            "Docket No. FINCEN-2026-0100"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "502",
+              "title": 31
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "1010",
+              "title": 31
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "1033",
+              "title": 31
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-06963.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2023-00861",
+          "title": "Proposed Lake Ontario National Marine Sanctuary; Notice of Proposed Rulemaking",
+          "citation": "88 FR 3334",
+          "publicationDate": "2023-01-19",
+          "commentsCloseOn": "2023-03-20",
+          "dates": "Comments: Send comments by March 20, 2023.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2023/01/19/2023-00861/proposed-lake-ontario-national-marine-sanctuary-notice-of-proposed-rulemaking",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2023-01-19/pdf/2023-00861.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2023/01/19/2023-00861.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2023/01/19/2023-00861.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [
+              {
+                "title": "Proposed Lake Ontario National Marine Sanctuary Draft Environmental Impact Statement and Draft Management Plan",
+                "document_id": "NOAA-NOS-2021-0050-0002"
+              }
+            ],
+            "comments_count": 96,
+            "agency_id": "NOAA",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=NOAA-NOS-2021-0050",
+            "supporting_documents_count": 1,
+            "docket_id": "NOAA-NOS-2021-0050",
+            "document_id": "NOAA-NOS-2021-0050-0077",
+            "regulation_id_number": null,
+            "title": "The Proposed Lake Ontario National Marine Sanctuary",
+            "checked_regulationsdotgov_at": "2023-08-10T01:00:08Z"
+          },
+          "docketIds": [
+            "Docket No. 221216-0275"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "922",
+              "title": 15
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2023-00861.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2022-08973",
+          "title": "Building for the Future Through Electric Regional Transmission Planning and Cost Allocation and Generator Interconnection",
+          "citation": "87 FR 26504",
+          "publicationDate": "2022-05-04",
+          "commentsCloseOn": "2022-07-18",
+          "dates": "Comments are due July 18, 2022 and Reply Comments are due August 17, 2022.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2022/05/04/2022-08973/building-for-the-future-through-electric-regional-transmission-planning-and-cost-allocation-and",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2022-05-04/pdf/2022-08973.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2022/05/04/2022-08973.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2022/05/04/2022-08973.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "FERC",
+            "document_id": "FERC-2022-0536-0001",
+            "checked_regulationsdotgov_at": "2023-02-28T17:16:38Z"
+          },
+          "docketIds": [
+            "Docket No. RM21-17-000"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "35",
+              "title": 18
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2022-08973.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2019-20796",
+          "title": "Federal Acquisition Regulation: Increased Micro-Purchase and Simplified Acquisition Thresholds; 2018-004",
+          "citation": "84 FR 52420",
+          "publicationDate": "2019-10-02",
+          "commentsCloseOn": "2019-12-02",
+          "dates": "Interested parties should submit comments to the Regulatory Secretariat Division at one of the addresses shown below on or before December 2, 2019 to be considered in the formulation of a final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2019/10/02/2019-20796/federal-acquisition-regulation-increased-micro-purchase-and-simplified-acquisition-thresholds",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2019-10-02/pdf/2019-20796.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2019/10/02/2019-20796.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2019/10/02/2019-20796.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [
+              {
+                "title": "2018-004 (p) TAB K Cost Analysis_4.23.19 (5)",
+                "document_id": "FAR-2018-0011-0002"
+              }
+            ],
+            "regulatory_plan": {
+              "html_url": "https://www.federalregister.gov/regulations/9000-AN65/federal-acquisition-regulation-far-far-case-2018-004-increased-micro-purchase-and-simplified-acquisi",
+              "title": "Federal Acquisition Regulation (FAR); FAR Case 2018-004; Increased Micro-Purchase and Simplified Acquisition Thresholds"
+            },
+            "comments_count": 6,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2018-0011",
+            "supporting_documents_count": 1,
+            "docket_id": "FAR-2018-0011",
+            "document_id": "FAR-2018-0011-0001",
+            "regulation_id_number": "9000-AN65",
+            "title": "Federal Acquisition Regulation:  Increased Micro-Purchase and Simplified Acquisition Thresholds; (FAR Case 2018-004)",
+            "checked_regulationsdotgov_at": "2023-03-01T02:00:23Z"
+          },
+          "docketIds": [
+            "FAR Case 2018-004",
+            "Docket No. FAR-2018-0011, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 2,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 9,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 13,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 16,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 19,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 22,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 25,
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 52,
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2019-20796.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2020-19472",
+          "title": "Fiduciary Duties Regarding Proxy Voting and Shareholder Rights",
+          "citation": "85 FR 55219",
+          "publicationDate": "2020-09-04",
+          "commentsCloseOn": "2020-10-05",
+          "dates": "Comments on the proposal must be submitted on or before October 5, 2020.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2020/09/04/2020-19472/fiduciary-duties-regarding-proxy-voting-and-shareholder-rights",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2020-09-04/pdf/2020-19472.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2020/09/04/2020-19472.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2020/09/04/2020-19472.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "regulatory_plan": {
+              "html_url": "https://www.federalregister.gov/regulations/1210-AB91/fiduciary-duties-regarding-proxy-voting-and-shareholder-rights",
+              "title": "Fiduciary Duties Regarding Proxy Voting and Shareholder Rights"
+            },
+            "comments_count": 7098,
+            "agency_id": "EBSA",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=EBSA-2020-0008",
+            "supporting_documents_count": 0,
+            "docket_id": "EBSA-2020-0008",
+            "document_id": "EBSA-2020-0008-0001",
+            "regulation_id_number": "1210-AB91",
+            "title": "Fiduciary Duties Regarding Proxy Voting and Shareholder Rights",
+            "checked_regulationsdotgov_at": "2023-03-01T05:15:21Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "2509",
+              "title": 29
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "2550",
+              "title": 29
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2020-19472.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2020-02320",
+          "title": "Position Limits for Derivatives",
+          "citation": "85 FR 11596",
+          "publicationDate": "2020-02-27",
+          "commentsCloseOn": "2020-04-29",
+          "dates": "Comments must be received on or before April 29, 2020.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2020/02/27/2020-02320/position-limits-for-derivatives",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2020-02-27/pdf/2020-02320.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2020/02/27/2020-02320.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2020/02/27/2020-02320.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "CFTC",
+            "document_id": "CFTC-2020-0013-0001",
+            "checked_regulationsdotgov_at": "2023-02-28T18:44:51Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "1",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "15",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "17",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "19",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "40",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "140",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "150",
+              "title": 17
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "151",
+              "title": 17
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2020-02320.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2016-19793",
+          "title": "Use of Spectrum Bands Above 24 GHz for Mobile Radio Services",
+          "citation": "81 FR 58270",
+          "publicationDate": "2016-08-24",
+          "commentsCloseOn": "2016-09-30",
+          "dates": "Comments are due on or before September 30, 2016; reply comments are due on or before October 31, 2016.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2016/08/24/2016-19793/use-of-spectrum-bands-above-24-ghz-for-mobile-radio-services",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2016-08-24/pdf/2016-19793.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2016/08/24/2016-19793.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2016/08/24/2016-19793.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "FCC",
+            "document_id": "FCC-2016-0264-0001",
+            "checked_regulationsdotgov_at": "2023-03-01T00:32:08Z"
+          },
+          "docketIds": [
+            "GN Docket No. 14-177, IB Docket Nos. 15-256 and 97-95, RM-11664, WT Docket No. 10-112",
+            "FCC 16-89"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 2,
+              "title": 47
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 25,
+              "title": 47
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 30,
+              "title": 47
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 101,
+              "title": 47
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2016-19793.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2015-32755",
+          "title": "Transfer Agent Regulations",
+          "citation": "80 FR 81948",
+          "publicationDate": "2015-12-31",
+          "commentsCloseOn": "2016-02-29",
+          "dates": "Comments must be in writing and received by February 29, 2016.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2015/12/31/2015-32755/transfer-agent-regulations",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2015-12-31/pdf/2015-32755.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2015/12/31/2015-32755.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2015/12/31/2015-32755.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "comments_count": 0,
+            "agency_id": "SEC",
+            "document_id": "SEC-2015-2198-0001",
+            "checked_regulationsdotgov_at": "2023-03-01T08:41:39Z"
+          },
+          "docketIds": [
+            "Release No. 34-76743",
+            "File No. S7-27-15"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 240,
+              "title": 17
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2015-32755.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2012-31480",
+          "title": "Introduction to the Unified Agenda of Federal Regulatory and Deregulatory Actions",
+          "citation": "78 FR 1318",
+          "publicationDate": "2013-01-08",
+          "dates": "Undetermined.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2013/01/08/2012-31480/introduction-to-the-unified-agenda-of-federal-regulatory-and-deregulatory-actions",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2013-01-08/pdf/2012-31480.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2013/01/08/2012-31480.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2013/01/08/2012-31480.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=RISC-2013-0001",
+            "supporting_documents_count": 0,
+            "docket_id": "RISC-2013-0001",
+            "regulation_id_number": null,
+            "title": "REGULATORY AGENDA Semiannual Regulatory Agenda; Regulatory Plan",
+            "checked_regulationsdotgov_at": "2013-02-19T17:35:17Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2012-31480.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2012-1620",
+          "title": "Introduction to the Unified Agenda of Federal Regulatory and Deregulatory Actions",
+          "citation": "77 FR 7663",
+          "publicationDate": "2012-02-13",
+          "dates": "Undetermined.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2012/02/13/2012-1620/introduction-to-the-unified-agenda-of-federal-regulatory-and-deregulatory-actions",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2012-02-13/pdf/2012-1620.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2012/02/13/2012-1620.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2012/02/13/2012-1620.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "checked_regulationsdotgov_at": "2012-03-03T08:59:30Z"
+          },
+          "docketIds": [],
+          "cfrReferences": [],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2012-1620.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2011-30358",
+          "title": "2017 and Later Model Year Light-Duty Vehicle Greenhouse Gas Emissions and Corporate Average Fuel Economy Standards",
+          "citation": "76 FR 74854",
+          "publicationDate": "2011-12-01",
+          "commentsCloseOn": "2012-01-03",
+          "dates": "Comments: Comments must be received on or before January 30, 2012. Under the Paperwork Reduction Act, comments on the information collection provisions must be received by the Office of Management and Budget (OMB) on or before January 3, 2012. See the SUPPLEMENTARY INFORMATION section on \"Public Participation\" for more information about written comments.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2011/12/01/2011-30358/2017-and-later-model-year-light-duty-vehicle-greenhouse-gas-emissions-and-corporate-average-fuel",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2011-12-01/pdf/2011-30358.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2011/12/01/2011-30358.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2011/12/01/2011-30358.xml",
+          "commentUrl": null,
+          "regulationsDotGovInfo": {
+            "supporting_documents": [
+              {
+                "title": "Cost Effect Employment Impacts Final Rulemaking",
+                "document_id": "EPA-HQ-OAR-2010-0799-12272"
+              },
+              {
+                "title": "EO12866 Review-Interagency Review Material 2017-2025 Vehicle GHG and Fuel Economy Standard and FRM 2060 AQ54",
+                "document_id": "EPA-HQ-OAR-2010-0799-12009"
+              },
+              {
+                "title": "Pain at the Pump The Effect of Gasoline Prices on New and Used Automobile Markets",
+                "document_id": "EPA-HQ-OAR-2010-0799-11988"
+              },
+              {
+                "title": "Memorandum from Don Kopinski to Docket EPA-HQ-OAR-2010-0799, June 25, 2012",
+                "document_id": "EPA-HQ-OAR-2010-0799-11937"
+              },
+              {
+                "title": "Upstream scalars LD GHG 3_ram_RC",
+                "document_id": "EPA-HQ-OAR-2010-0799-11876"
+              },
+              {
+                "title": "Toxicological Profile for Polycyclic Aromatic Hydrocarbons August 1995",
+                "document_id": "EPA-HQ-OAR-2010-0799-11862"
+              },
+              {
+                "title": "Memorandum from Ed Nam to Docket EPA-HQ-OAR-2010-0799, Meeting with 25x'25 Alliance held on July 5, 2012 Regarding Proposal for 2017-2025 Light-Duty (LD) Greenhouse Gas (GHG) Standards",
+                "document_id": "EPA-HQ-OAR-2010-0799-11828"
+              },
+              {
+                "title": "Impact Calculations Spreadsheet, 10-5-09",
+                "document_id": "EPA-HQ-OAR-2010-0799-1127"
+              },
+              {
+                "title": "Urban Ornamentals Plants: Sensitivity to Ozone and Potential Economic Losses",
+                "document_id": "EPA-HQ-OAR-2010-0799-0837"
+              },
+              {
+                "title": "Feebates, Rebates, and Gas-Guzzler Taxes:  A Study of Incentives for Increased Fuel Economy",
+                "document_id": "EPA-HQ-OAR-2010-0799-0686"
+              }
+            ],
+            "regulatory_plan": {
+              "html_url": "https://www.federalregister.gov/regulations/2060-AQ54/joint-rulemaking-to-establish-2017-and-later-model-year-light-duty-vehicle-ghg-emissions-and-cafe-st",
+              "title": "Joint Rulemaking To Establish 2017 and Later Model Year Light Duty Vehicle GHG Emissions and CAFE Standards"
+            },
+            "comments_count": 272787,
+            "agency_id": "EPA",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=EPA-HQ-OAR-2010-0799",
+            "supporting_documents_count": 953,
+            "docket_id": "EPA-HQ-OAR-2010-0799",
+            "document_id": "EPA-HQ-OAR-2010-0799-0639",
+            "regulation_id_number": "2060-AQ54",
+            "title": "EPA/NHTSA Joint Rulemaking to Establish Light-duty Vehicle GHG Emissions Standards and CAFE Standards for Model Year 2017 and Later",
+            "checked_regulationsdotgov_at": "2025-10-26T07:55:03Z"
+          },
+          "docketIds": [
+            "EPA-HQ-OAR-2010-0799",
+            "FRL-9495-2",
+            "NHTSA-2010-0131"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 85,
+              "title": 40
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 86,
+              "title": 40
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 600,
+              "title": 40
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 523,
+              "title": 49
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 531,
+              "title": 49
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 533,
+              "title": 49
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 536,
+              "title": 49
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": 537,
+              "title": 49
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2011-30358.json",
+          "auditError": ""
+        }
+      ],
+      "currentTrancheDocuments": [
+        {
+          "documentNumber": "2026-12562",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 3 and 49",
+          "citation": "91 FR 37698",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12562/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-3-and-49",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12562.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12562.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12562.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0007-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0007-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 4,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0007",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0007",
+            "document_id": "FAR-2026-0007-0001",
+            "regulation_id_number": "9000-AO92",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 3 and 49  (FAR Case 2026-007)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-007, Docket No. FAR-2026-0007, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "3",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "49",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12562.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12561",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 5, 24, and 29",
+          "citation": "91 FR 37676",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12561/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-5-24-and",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12561.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12561.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12561.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0005-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0005-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 5,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0005",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0005",
+            "document_id": "FAR-2026-0005-0001",
+            "regulation_id_number": "9000-AO90",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 5, 24, 29, and 52  (FAR Case 2026-005)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-005, Docket No. FAR-2026-0005, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "5",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "24",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "29",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12561.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12559",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 1, 2, 4, 33, 39, 40, and 53",
+          "citation": "91 FR 37550",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12559/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-1-2-4-33",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12559.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12559.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12559.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0001-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0001-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 16,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0001",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0001",
+            "document_id": "FAR-2026-0001-0001",
+            "regulation_id_number": "9000-AO86",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 1, 2, 4, 33, 39, 40, and 53  (FAR Case 2026-001)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-001, Docket No. FAR-2026-0001, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "1",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "2",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "4",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "33",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "39",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "40",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "53",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12559.json",
+          "auditError": ""
+        },
+        {
+          "documentNumber": "2026-12560",
+          "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 6, 7, 10, 18, 26, 37, and 41",
+          "citation": "91 FR 37636",
+          "publicationDate": "2026-06-23",
+          "commentsCloseOn": "2026-07-23",
+          "dates": "Interested parties should submit written comments to the Regulatory Secretariat Division at the address shown below on or before July 23, 2026, to be considered in the formation of the final rule.",
+          "htmlUrl": "https://www.federalregister.gov/documents/2026/06/23/2026-12560/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-6-7-10-18",
+          "pdfUrl": "https://www.govinfo.gov/content/pkg/FR-2026-06-23/pdf/2026-12560.pdf",
+          "rawTextUrl": "https://www.federalregister.gov/documents/full_text/text/2026/06/23/2026-12560.txt",
+          "fullTextXmlUrl": "https://www.federalregister.gov/documents/full_text/xml/2026/06/23/2026-12560.xml",
+          "commentUrl": "http://www.regulations.gov/commenton/FAR-2026-0002-0001",
+          "regulationsDotGovUrl": "http://www.regulations.gov/commenton/FAR-2026-0002-0001",
+          "regulationsDotGovInfo": {
+            "supporting_documents": [],
+            "comments_count": 9,
+            "agency_id": "FAR",
+            "comments_url": "https://www.regulations.gov/docketBrowser?rpp=50&so=DESC&sb=postedDate&po=0&dct=PS&D=FAR-2026-0002",
+            "supporting_documents_count": 0,
+            "docket_id": "FAR-2026-0002",
+            "document_id": "FAR-2026-0002-0001",
+            "regulation_id_number": "9000-AO87",
+            "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 6, 7, 10, 18, 26, 37, and 41 (FAR Case 2026-002)",
+            "checked_regulationsdotgov_at": "2026-07-03T19:55:04Z"
+          },
+          "docketIds": [
+            "FAR Case 2026-002, Docket No. FAR-2026-0002, Sequence No. 1"
+          ],
+          "cfrReferences": [
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "6",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "7",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "10",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "18",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "26",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "37",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "41",
+              "title": 48
+            },
+            {
+              "chapter": null,
+              "citation_url": null,
+              "part": "52",
+              "title": 48
+            }
+          ],
+          "detailUrl": "https://www.federalregister.gov/api/v1/documents/2026-12560.json",
+          "auditError": ""
+        }
+      ],
+      "deadlineCounts": {
+        "2026-07-23": 4,
+        "no_deadline": 5,
+        "2024-11-29": 1,
+        "2026-06-09": 1,
+        "2023-03-20": 1,
+        "2022-07-18": 1,
+        "2019-12-02": 1,
+        "2020-10-05": 1,
+        "2020-04-29": 1,
+        "2016-09-30": 1,
+        "2016-02-29": 1,
+        "2012-01-03": 1
+      },
+      "currentTrancheDeadlineCounts": {
+        "2026-07-23": 4
+      },
+      "gaps": [
+        "Broad Federal Register search results include older FAR proposed rules; current tranche counts are separated by publication date and title pattern.",
+        "Document metadata is not enough for Workstream D. Full text and amendatory instructions must be parsed.",
+        "Unparsed amendatory instructions must be counted as manual_review rather than guessed."
+      ]
+    },
+    "regulationsGov": {
+      "sourceUrl": "https://open.gsa.gov/api/regulationsgov/",
+      "mentionsApiKey": true,
+      "mentionsCommentPostingActivation": true,
+      "verifiedAt": "2026-07-03T20:00:15.454Z",
+      "gaps": [
+        "Regulations.gov API enrichment needs a free API key.",
+        "Comment posting is out of scope for ClauseFinder. The safer feature is export-only comment packets."
+      ]
+    }
+  },
+  "reviewerSignoff": [
+    {
+      "workstream": "A",
+      "required": [
+        "Approve the pre-overhaul baseline date.",
+        "Spot-check at least 10 section deltas across at least 4 FAR parts.",
+        "Approve the model-deviation adoption caveat.",
+        "Decide whether computed diffs can appear in demos or only official line-outs."
+      ]
+    },
+    {
+      "workstream": "B",
+      "required": [
+        "Confirm every guidance document is labeled non-regulatory.",
+        "Review 25 inferred crosswalk edges before treating the feature as reliable.",
+        "Choose the similarity threshold for text-match crosswalks.",
+        "Approve the no-relocated-equivalent message."
+      ]
+    },
+    {
+      "workstream": "C",
+      "required": [
+        "Approve 60 or more answerable questions and 10 or more trap questions.",
+        "Record acceptable citations and caveat requirements.",
+        "Set the public demo floor for top-5 hit rate and refusal behavior."
+      ]
+    },
+    {
+      "workstream": "D",
+      "required": [
+        "Verify the discovered Federal Register proposed-rule set.",
+        "Review manual_review amendatory instructions.",
+        "Approve the CUI worked-example mapping before public demo use.",
+        "Approve the export-only comment packet disclaimer."
+      ]
+    }
+  ],
+  "demoRecommendation": {
+    "publicClaim": "partial coverage with visible gaps",
+    "doNotClaim": [
+      "Complete official line-out parsing for all FAR parts.",
+      "Agency adoption status for model deviations.",
+      "Official guidance crosswalks unless source_edges.method is official_crosswalk.",
+      "Practitioner-reviewed benchmark until reviewedBy fields meet the target set size."
+    ],
+    "nextBestSlice": "Prioritize SAM registration and CUI as vertical slices because they exercise version deltas, proposed-rule alerts, and comment-packet export."
+  }
+}

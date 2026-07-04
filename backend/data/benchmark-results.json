@@ -1,0 +1,174 @@
+{
+  "ok": true,
+  "label": "ClauseFinder deterministic benchmark",
+  "generatedAt": "2026-07-03T20:51:36.566Z",
+  "cases": 9,
+  "answerableCases": 9,
+  "trapCases": 0,
+  "reviewedCases": 0,
+  "topOneRate": 1,
+  "topThreeRate": 1,
+  "topFiveRate": 1,
+  "meanReciprocalRank": 1,
+  "refusalPrecision": null,
+  "refusalRecall": null,
+  "caveatCompliance": null,
+  "citationResolutionRate": 1,
+  "note": "Interim, partial corpus. The design target is at least 60 reviewed answerable questions and 10 reviewed trap questions.",
+  "failures": [],
+  "summary": [
+    {
+      "id": "sam-registration",
+      "passed": true,
+      "topOne": "52.204-13",
+      "topThree": [
+        "52.204-13",
+        "52.204-13",
+        "4.1102"
+      ],
+      "topFive": [
+        "52.204-13",
+        "52.204-13",
+        "4.1102",
+        "52.204-7",
+        "4.1102"
+      ]
+    },
+    {
+      "id": "micro-purchase-supply",
+      "passed": true,
+      "topOne": "13.201",
+      "topThree": [
+        "13.201",
+        "13.201",
+        "13.500"
+      ],
+      "topFive": [
+        "13.201",
+        "13.201",
+        "13.500",
+        "13.201",
+        "13.500"
+      ]
+    },
+    {
+      "id": "basic-safeguarding",
+      "passed": true,
+      "topOne": "52.204-21",
+      "topThree": [
+        "52.204-21",
+        "52.204-21",
+        "212.371"
+      ],
+      "topFive": [
+        "52.204-21",
+        "52.204-21",
+        "212.371",
+        "252.204-7008",
+        "4.1903"
+      ]
+    },
+    {
+      "id": "exact-far-prescription",
+      "passed": true,
+      "topOne": "4.1903",
+      "topThree": [
+        "4.1903",
+        "4.1903",
+        "FAR"
+      ],
+      "topFive": [
+        "4.1903",
+        "4.1903",
+        "FAR",
+        "FAR Council",
+        "FAR Overhaul"
+      ]
+    },
+    {
+      "id": "exact-dfars-cyber",
+      "passed": true,
+      "topOne": "252.204-7012",
+      "topThree": [
+        "252.204-7012",
+        "252.204-7012",
+        "DFARS"
+      ],
+      "topFive": [
+        "252.204-7012",
+        "252.204-7012",
+        "DFARS",
+        "AFARS",
+        "DAFFARS"
+      ]
+    },
+    {
+      "id": "dfars-cyber-spaced-citation",
+      "passed": true,
+      "topOne": "252.204-7012",
+      "topThree": [
+        "252.204-7012",
+        "252.204-7012",
+        "DFARS"
+      ],
+      "topFive": [
+        "252.204-7012",
+        "252.204-7012",
+        "DFARS",
+        "AFARS",
+        "DAFFARS"
+      ]
+    },
+    {
+      "id": "verbatim-sam-maintenance-clause",
+      "passed": true,
+      "topOne": "52.204-13",
+      "topThree": [
+        "52.204-13",
+        "52.204-7",
+        "4.1105"
+      ],
+      "topFive": [
+        "52.204-13",
+        "52.204-7",
+        "4.1105",
+        "4.1105",
+        "AFARS"
+      ]
+    },
+    {
+      "id": "paraphrase-sam-maintenance-clause",
+      "passed": true,
+      "topOne": "52.204-13",
+      "topThree": [
+        "52.204-13",
+        "52.204-13",
+        "52.204-7"
+      ],
+      "topFive": [
+        "52.204-13",
+        "52.204-13",
+        "52.204-7",
+        "52.204-7",
+        "4.1803"
+      ]
+    },
+    {
+      "id": "abstract-eft-sam-payment-clause",
+      "passed": true,
+      "topOne": "52.232-33",
+      "topThree": [
+        "52.232-33",
+        "52.232-33",
+        "52.232-35"
+      ],
+      "topFive": [
+        "52.232-33",
+        "52.232-33",
+        "52.232-35",
+        "252.232-7011",
+        "52.232-35"
+      ]
+    }
+  ]
+}

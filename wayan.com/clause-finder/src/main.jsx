@@ -69,6 +69,8 @@ function Header({ activePage, setActivePage, meta, onExport }) {
     ["tool", "Tool"],
     ["about", "About"],
     ["method", "Method"],
+    ["coverage", "Coverage"],
+    ["benchmark", "Benchmark"],
     ["sources", "Sources"]
   ];
   return (
@@ -99,11 +101,27 @@ function Header({ activePage, setActivePage, meta, onExport }) {
           {meta?.totalNodes ? `${meta.totalNodes.toLocaleString()} indexed nodes` : "Loading corpus"}
           {meta?.sourceStats?.sourceDatabaseNodes ? " from Neon" : ""}
         </span>
+        <BenchmarkBadge evaluation={meta?.evaluation} />
         <button className="secondary-button" type="button" onClick={onExport}>
           Export session
         </button>
       </div>
     </header>
+  );
+}
+
+function BenchmarkBadge({ evaluation }) {
+  const rate = evaluation?.topFiveRate;
+  const label =
+    typeof rate === "number"
+      ? `Top 5 ${(rate * 100).toFixed(0)}%`
+      : evaluation?.cases
+        ? "Benchmark pending"
+        : "No benchmark";
+  return (
+    <span className="benchmark-badge" title={evaluation?.note || "Benchmark status"}>
+      {label}
+    </span>
   );
 }
 
@@ -269,6 +287,13 @@ function ResultCard({ result, index, selected, onSelect, feedback, setFeedback }
             <span className="version">Part {result.part}</span>
             {missing > 0 && <span className="version version-warning">{missing} facts unknown</span>}
           </div>
+          {Array.isArray(result.badges) && result.badges.length > 0 && (
+            <div className="badge-row">
+              {result.badges.map((badge) => (
+                <span className="notice-chip" key={badge}>{badge}</span>
+              ))}
+            </div>
+          )}
           <p>{result.whyRelevant}</p>
           <div className="score-grid">
             <ScoreBar label="Semantic" value={result.score?.semantic} />
@@ -417,7 +442,7 @@ function ClausePassport({ result }) {
 }
 
 function DiffView({ result }) {
-  const diff = result.clausePassport?.diff;
+  const diff = result.clausePassport?.delta || result.clausePassport?.diff;
   return (
     <section className="detail-section">
       <h3>2026 version comparison</h3>
@@ -425,19 +450,168 @@ function DiffView({ result }) {
       <div className="diff-grid">
         <div>
           <span>Earlier state</span>
-          <strong>{diff?.beforeLabel || "not indexed"}</strong>
+          <strong>{diff?.from?.date || diff?.beforeLabel || "not indexed"}</strong>
+          {diff?.from?.sourceUrl && <a href={diff.from.sourceUrl} target="_blank" rel="noreferrer">Earlier source</a>}
         </div>
         <div>
           <span>Current or proposed state</span>
-          <strong>{diff?.afterLabel || result.version?.effectiveStart || "indexed source"}</strong>
+          <strong>{diff?.to?.date || diff?.afterLabel || result.version?.effectiveStart || "indexed source"}</strong>
+          {diff?.to?.sourceUrl && <a href={diff.to.sourceUrl} target="_blank" rel="noreferrer">Later source</a>}
+        </div>
+      </div>
+      <div className="version-row">
+        <span className="version">{diff?.methodLabel || diff?.method || "computed diff"}</span>
+        <span className="version">Confidence {diff?.confidence || "unknown"}</span>
+      </div>
+      {diff?.adoptionCaveat && <div className="warning-box"><strong>Deviation caveat.</strong><p>{diff.adoptionCaveat}</p></div>}
+      <div className="redline-grid">
+        <div>
+          <h3>Removed or changed</h3>
+          {(diff?.removed || []).length ? (
+            <ul className="compact-list redline-list">
+              {diff.removed.map((line) => <li className="removed" key={line}>{line}</li>)}
+            </ul>
+          ) : (
+            <p>No removed text was detected in the stored excerpt.</p>
+          )}
+        </div>
+        <div>
+          <h3>Added or later-state text</h3>
+          {(diff?.added || []).length ? (
+            <ul className="compact-list redline-list">
+              {diff.added.map((line) => <li className="added" key={line}>{line}</li>)}
+            </ul>
+          ) : (
+            <p>No added text was detected in the stored excerpt.</p>
+          )}
         </div>
       </div>
       <h3>Operational text signals</h3>
       <ul className="compact-list">
-        {(diff?.textSignals || []).map((signal) => (
+        {(result.clausePassport?.diff?.textSignals || []).map((signal) => (
           <li key={signal}>{signal}</li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+function CrosswalkView({ result }) {
+  const crosswalks = result.clausePassport?.crosswalks || [];
+  return (
+    <section className="detail-section">
+      <h3>Guidance crosswalk</h3>
+      <p>
+        Guidance links are relationship leads. The method and confidence label
+        tell you whether the link is official, citation-derived, text-derived,
+        or unresolved.
+      </p>
+      <div className="related-list">
+        {crosswalks.map((item, index) => (
+          item.sourceUrl ? (
+            <a href={item.sourceUrl} target="_blank" rel="noreferrer" key={`${item.title}-${index}`}>
+              <strong>{item.title || item.citation}</strong>
+              <span>{item.binding}. Method: {item.method}. Confidence: {item.confidence}.</span>
+              <small>{item.note}</small>
+            </a>
+          ) : (
+            <div className="source-stat" key={`${item.status}-${index}`}>
+              <strong>{item.status}</strong>
+              <span>{item.note}</span>
+            </div>
+          )
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProposedView({ result, question, context }) {
+  const proposed = result.clausePassport?.proposedChanges || [];
+  function exportCommentPacket() {
+    downloadJson({
+      app: "ClauseFinder",
+      packetType: "Proposed Rule Comment Packet",
+      question,
+      context,
+      currentSection: {
+        citation: result.citation,
+        title: result.title,
+        sourceUrl: result.sourceUrl,
+        text: result.bodyText || result.excerpt
+      },
+      proposedChanges: proposed,
+      delta: result.clausePassport?.delta,
+      disclaimer:
+        "Research orientation from public sources. Not legal advice. Verify all text against linked Federal Register documents before filing.",
+      exportedAt: new Date().toISOString()
+    });
+  }
+  return (
+    <section className="detail-section">
+      <h3>Proposed-rule status</h3>
+      {proposed.length ? (
+        <>
+          <div className="warning-box">
+            <strong>Proposed rule, not in effect.</strong>
+            <p>Use this view for comment preparation and issue spotting, not as current law.</p>
+          </div>
+          <div className="related-list">
+            {proposed.map((item) => (
+              <a href={item.sourceUrl} target="_blank" rel="noreferrer" key={`${item.citation}-${item.sourceUrl}`}>
+                <strong>{item.title || item.citation}</strong>
+                <span>Comments close {item.commentDeadline}. Method: {item.method}. Confidence: {item.confidence}.</span>
+                <small>{item.docketId || "Docket not extracted in stored metadata."}</small>
+              </a>
+            ))}
+          </div>
+          <button className="secondary-button" type="button" onClick={exportCommentPacket}>
+            Export comment packet
+          </button>
+        </>
+      ) : (
+        <p>No proposed-rule mapping was found for this result in the indexed corpus.</p>
+      )}
+    </section>
+  );
+}
+
+function VintageLookup({ result }) {
+  const [date, setDate] = useState("2024-03-15");
+  const [dateType, setDateType] = useState("Award date");
+  const versions = result.versions || [];
+  const sorted = [...versions].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const selected =
+    sorted.filter((version) => /^\d{4}-\d{2}-\d{2}/.test(String(version.date)) && String(version.date).slice(0, 10) <= date).pop() ||
+    sorted[0];
+  return (
+    <section className="detail-section">
+      <h3>Contract-vintage lookup</h3>
+      <div className="warning-box">
+        <strong>Public date only.</strong>
+        <p>Do not enter contract numbers, contractor names, source-selection details, or proprietary facts. The clauses physically incorporated in the contract govern that contract.</p>
+      </div>
+      <div className="vintage-grid">
+        <label className="context-control">
+          <span>Date type</span>
+          <select value={dateType} onChange={(event) => setDateType(event.target.value)}>
+            {["Award date", "Solicitation date", "Modification date"].map((item) => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="context-control">
+          <span>{dateType}</span>
+          <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+        </label>
+      </div>
+      <div className="source-stat">
+        <strong>{selected ? `${selected.label} as orientation for ${date}` : "No version state indexed"}</strong>
+        <span>{selected?.date || "No dated source is available for this citation."}</span>
+      </div>
+      <p>
+        Deviation applicability depends on agency adoption. This lookup orients
+        research by source dates; it does not decide which clause governs a live
+        contract action.
+      </p>
     </section>
   );
 }
@@ -463,7 +637,7 @@ function RedTeamView({ result }) {
   );
 }
 
-function VerificationPanel({ result, context, feedback, setFeedback }) {
+function VerificationPanel({ result, context, feedback, setFeedback, question }) {
   const [tab, setTab] = useState("Passport");
   useEffect(() => setTab("Passport"), [result?.id]);
 
@@ -493,10 +667,11 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
       <div className="version-row">
         <span className={versionClass(result.version?.label)}>{result.version?.label || "current"}</span>
         <span className="version">{result.version?.effectiveStart || "current text"}</span>
+        <span className="version">{result.clausePassport?.bindingStatus || "source type unknown"}</span>
       </div>
 
       <div className="tab-row" role="tablist" aria-label="Verification details">
-        {["Passport", "Text", "Prescription", "Hierarchy", "Timeline", "Diff", "Challenge"].map((item) => (
+        {["Passport", "Text", "Prescription", "Hierarchy", "Timeline", "Delta", "Crosswalk", "Proposed", "Vintage", "Challenge"].map((item) => (
           <button
             key={item}
             type="button"
@@ -563,7 +738,10 @@ function VerificationPanel({ result, context, feedback, setFeedback }) {
         </section>
       )}
 
-      {tab === "Diff" && <DiffView result={result} />}
+      {tab === "Delta" && <DiffView result={result} />}
+      {tab === "Crosswalk" && <CrosswalkView result={result} />}
+      {tab === "Proposed" && <ProposedView result={result} question={question} context={context} />}
+      {tab === "Vintage" && <VintageLookup result={result} />}
 
       {tab === "Challenge" && <RedTeamView result={result} />}
 
@@ -668,6 +846,142 @@ function MethodPage({ meta }) {
   );
 }
 
+function CoveragePage({ meta }) {
+  const coverage = meta?.coverage;
+  const audit = coverage?.sourceAudit;
+  return (
+    <main className="page-panel">
+      <h2>Corpus coverage and honest gaps</h2>
+      <p>
+        ClauseFinder now exposes the same coverage gaps reviewers need to
+        inspect: version deltas, guidance crosswalks, benchmark status, and
+        proposed-rule parsing. Derived links are labeled by method and confidence.
+      </p>
+      <div className="warning-box">
+        <strong>{coverage?.posture || "partial corpus"} posture.</strong>
+        <p>{coverage?.claim || "Coverage is partial until source inventory and reviewer signoff are complete."}</p>
+      </div>
+      <div className="coverage-grid">
+        {(coverage?.rows || []).map((row) => (
+          <div className="coverage-card" key={row.workstream}>
+            <div className="version-row">
+              <span className="version">Workstream {row.workstream}</span>
+              <span className={row.status === "pending" ? "version version-warning" : "version version-current"}>{row.status}</span>
+            </div>
+            <h3>{row.label}</h3>
+            <p>{row.parsed.toLocaleString()} parsed or detected against target {Number(row.total || 0).toLocaleString()}.</p>
+            <small>Method: {row.method}</small>
+            <strong>{row.gap}</strong>
+          </div>
+        ))}
+      </div>
+      <h3 className="section-label">Coverage totals</h3>
+      <div className="source-grid">
+        {Object.entries(coverage?.totals || {}).map(([label, count]) => (
+          <div className="source-stat" key={label}>
+            <strong>{label}</strong>
+            <span>{Number(count).toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+      <h3 className="section-label">Standing caveats</h3>
+      <ul className="compact-list">
+        {(coverage?.caveats || []).map((item) => <li key={item}>{item}</li>)}
+      </ul>
+      <h3 className="section-label">Live source audit</h3>
+      {audit ? (
+        <>
+          <div className="coverage-grid">
+            <div className="coverage-card">
+              <h3>FAR Overhaul</h3>
+              <p>{Number(audit.farOverhaul?.candidateDocuments || 0).toLocaleString()} candidate official documents verified from Acquisition.gov.</p>
+              <small>{audit.farOverhaul?.sourceUrl}</small>
+            </div>
+            <div className="coverage-card">
+              <h3>eCFR Title 48</h3>
+              <p>{audit.ecfr?.title48?.name || "Title 48 status checked"}</p>
+              <small>Up to date as of {audit.ecfr?.title48?.upToDateAsOf || "not reported"}.</small>
+            </div>
+            <div className="coverage-card">
+              <h3>Federal Register</h3>
+              <p>
+                {Number(audit.federalRegister?.currentTrancheReturned || 0).toLocaleString()} current-tranche records;
+                {" "}{Number(audit.federalRegister?.returned || 0).toLocaleString()} broad-search records.
+              </p>
+              <small>{Object.keys(audit.federalRegister?.currentTrancheDeadlineCounts || {}).join(", ") || "No current-tranche deadline metadata."}</small>
+            </div>
+            <div className="coverage-card">
+              <h3>Regulations.gov</h3>
+              <p>{audit.regulationsGov?.mentionsApiKey ? "API key required for enrichment." : "API key status not detected."}</p>
+              <small>Comment posting remains out of scope.</small>
+            </div>
+          </div>
+          <h3 className="section-label">FAR Overhaul source categories</h3>
+          <div className="source-grid">
+            {Object.entries(audit.farOverhaul?.categoryCounts || {}).map(([label, count]) => (
+              <div className="source-stat" key={label}>
+                <strong>{label.replaceAll("_", " ")}</strong>
+                <span>{Number(count).toLocaleString()} verified links</span>
+              </div>
+            ))}
+          </div>
+          <h3 className="section-label">Reviewer signoff still needed</h3>
+          <div className="coverage-grid">
+            {(audit.reviewerSignoff || []).map((item) => (
+              <div className="coverage-card" key={item.workstream}>
+                <span className="version">Workstream {item.workstream}</span>
+                <ul className="compact-list">
+                  {(item.required || []).map((required) => <li key={required}>{required}</li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p>Run the source audit to populate official-source inventory and reviewer signoff requirements.</p>
+      )}
+    </main>
+  );
+}
+
+function BenchmarkPage({ meta }) {
+  const evaluation = meta?.evaluation || {};
+  const metric = (value) => (typeof value === "number" ? `${(value * 100).toFixed(1)}%` : "pending");
+  return (
+    <main className="page-panel">
+      <h2>Accuracy benchmark</h2>
+      <p>
+        The benchmark is shown as measured evidence, not a trust slogan. Until
+        the gold set reaches the practitioner-reviewed target, the badge remains
+        interim and partial.
+      </p>
+      <div className="eval-grid method-eval">
+        <div className="eval-item">
+          <strong>{evaluation.cases || 0} total questions</strong>
+          <p>{evaluation.reviewedCases || 0} have reviewer initials recorded.</p>
+        </div>
+        <div className="eval-item">
+          <strong>{metric(evaluation.topFiveRate)} top-5</strong>
+          <p>Correct authority appears in the first five results.</p>
+        </div>
+        <div className="eval-item">
+          <strong>{metric(evaluation.topOneRate)} top-1</strong>
+          <p>Correct authority is the first result.</p>
+        </div>
+        <div className="eval-item">
+          <strong>{metric(evaluation.citationResolutionRate)}</strong>
+          <p>Citation-resolution rate for displayed results.</p>
+        </div>
+      </div>
+      <p>{evaluation.note || "Run the benchmark to generate current metrics."}</p>
+      <div className="version-row">
+        <span className="version">{evaluation.benchmarkStatus || "pending"}</span>
+        <span className="version">{evaluation.lastRun || "no run recorded"}</span>
+      </div>
+    </main>
+  );
+}
+
 function SourcesPage({ meta }) {
   return (
     <main className="page-panel">
@@ -764,6 +1078,7 @@ function ToolPage({
           context={responseContext || context}
           feedback={feedback}
           setFeedback={setFeedback}
+          question={question}
         />
       </div>
       <ClarifyPanel
@@ -937,6 +1252,8 @@ function App() {
       )}
       {activePage === "about" && <AboutPage />}
       {activePage === "method" && <MethodPage meta={meta} />}
+      {activePage === "coverage" && <CoveragePage meta={meta} />}
+      {activePage === "benchmark" && <BenchmarkPage meta={meta} />}
       {activePage === "sources" && <SourcesPage meta={meta} />}
       <footer className="footer-note">
         ClauseFinder is a Wayan Vota project under /clause-finder/. It searches

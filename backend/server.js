@@ -1,5 +1,5 @@
 import http from "node:http";
-import { searchFar, getMeta } from "./search.js";
+import { searchFar, getMeta, getCoverage } from "./search.js";
 import { loadEnvFile } from "./env.js";
 import { clarifyQuestion } from "./openai.js";
 
@@ -34,6 +34,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/api/meta") {
       return sendJson(res, 200, await getMeta());
+    }
+    if (req.method === "GET" && url.pathname === "/api/coverage") {
+      return sendJson(res, 200, await getCoverage());
     }
     if (req.method === "POST" && url.pathname === "/api/clarify") {
       const body = await readJson(req);

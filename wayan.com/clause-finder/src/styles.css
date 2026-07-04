@@ -31,7 +31,8 @@ body {
 
 button,
 textarea,
-select {
+select,
+input {
   font: inherit;
 }
 
@@ -103,6 +104,15 @@ p {
   align-items: center;
   gap: 14px;
   font-size: 13px;
+}
+
+.benchmark-badge {
+  border: 1px solid color-mix(in srgb, var(--good) 35%, var(--border));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--good) 8%, #ffffff);
+  color: var(--good);
+  padding: 6px 8px;
+  font-weight: 800;
 }
 
 .page-nav {
@@ -205,7 +215,8 @@ p {
 }
 
 textarea,
-select {
+select,
+input {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -220,6 +231,10 @@ textarea {
 }
 
 select {
+  padding: 10px;
+}
+
+input {
   padding: 10px;
 }
 
@@ -399,6 +414,22 @@ select {
   gap: 6px;
 }
 
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.notice-chip {
+  border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--border));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--warn) 8%, #ffffff);
+  color: var(--warn);
+  padding: 5px 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .version {
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -523,7 +554,7 @@ meter::-webkit-meter-optimum-value {
 .tab-row {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
   gap: 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -561,7 +592,10 @@ meter::-webkit-meter-optimum-value {
 .eval-grid,
 .passport-grid,
 .diff-grid,
-.callout-grid {
+.callout-grid,
+.redline-grid,
+.coverage-grid,
+.vintage-grid {
   display: grid;
   gap: 8px;
 }
@@ -604,7 +638,9 @@ meter::-webkit-meter-optimum-value {
 .source-stat,
 .passport-item,
 .diff-grid div,
-.callout-grid div {
+.callout-grid div,
+.coverage-card,
+.redline-grid div {
   display: grid;
   gap: 5px;
   border: 1px solid var(--border);
@@ -621,7 +657,8 @@ meter::-webkit-meter-optimum-value {
 .source-stat strong,
 .passport-item strong,
 .diff-grid strong,
-.callout-grid h3 {
+.callout-grid h3,
+.coverage-card h3 {
   color: var(--text);
 }
 
@@ -639,8 +676,41 @@ meter::-webkit-meter-optimum-value {
 
 .passport-grid,
 .diff-grid,
-.callout-grid {
+.callout-grid,
+.redline-grid,
+.vintage-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.coverage-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.coverage-card p,
+.coverage-card small,
+.coverage-card strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.coverage-card small {
+  color: var(--muted);
+}
+
+.redline-list li {
+  border-left: 3px solid var(--border);
+  padding-left: 8px;
+}
+
+.redline-list li.removed {
+  border-color: var(--bad);
+  color: var(--bad);
+  text-decoration: line-through;
+}
+
+.redline-list li.added {
+  border-color: var(--good);
+  color: var(--good);
 }
 
 .compact-list {
@@ -812,7 +882,10 @@ meter::-webkit-meter-optimum-value {
   .source-grid,
   .passport-grid,
   .diff-grid,
-  .callout-grid {
+  .callout-grid,
+  .redline-grid,
+  .coverage-grid,
+  .vintage-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -844,6 +917,9 @@ meter::-webkit-meter-optimum-value {
   .passport-grid,
   .diff-grid,
   .callout-grid,
+  .redline-grid,
+  .coverage-grid,
+  .vintage-grid,
   .clarify-grid {
     grid-template-columns: 1fr;
   }
@@ -878,7 +954,8 @@ meter::-webkit-meter-optimum-value {
     padding: 10px 10px 0;
   }
 
-  .context-control select {
+  .context-control select,
+  .context-control input {
     border-left: 0;
   }
 

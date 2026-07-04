@@ -7,8 +7,13 @@ import { groundedAnswer } from "./openai.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const INDEX_PATH = process.env.FAR_INDEX_PATH || join(__dirname, "data", "far-index.json");
 const ACCURACY_CASES_PATH = process.env.ACCURACY_CASES_PATH || join(__dirname, "data", "accuracy-cases.json");
+const BENCHMARK_RESULTS_PATH = process.env.BENCHMARK_RESULTS_PATH || join(__dirname, "data", "benchmark-results.json");
+const SOURCE_COVERAGE_REPORT_PATH =
+  process.env.SOURCE_COVERAGE_REPORT_PATH || join(__dirname, "data", "source-coverage-report.json");
 const DATABASE_SEARCH_ENABLED = process.env.ECFR_SEARCH_DATABASE !== "false";
 const DATABASE_NODE_LIMIT = Number(process.env.ECFR_SEARCH_NODE_LIMIT || 50000);
+const FAR_BASELINE_DATE = process.env.FAR_BASELINE_DATE || "2025-01-01";
+const FAR_OVERHAUL_COMMENT_DEADLINE = process.env.FAR_OVERHAUL_COMMENT_DEADLINE || "2026-07-23";
 
 const STOP_WORDS = new Set([
   "a",
@@ -55,6 +60,7 @@ const STOP_WORDS = new Set([
 
 let indexCache;
 let evaluationCache;
+let sourceCoverageCache;
 let sourceDatabaseLoadWarningLogged = false;
 let ecfrDatabaseLoadWarningLogged = false;
 
@@ -200,9 +206,44 @@ function versionNote(node) {
   return `Current indexed ${node.regime || "public regulatory"} source.`;
 }
 
+function isGuidanceNode(node) {
+  const joined = `${node.regime || ""} ${node.title || ""} ${node.type || ""}`.toLowerCase();
+  return /companion|practitioner|album|buying guide|category management|guide|overhaul source/.test(joined);
+}
+
+function bindingLabel(node) {
+  return isGuidanceNode(node) ? "non-regulatory guidance" : "regulatory or proposed-rule source";
+}
+
+function compareDate(value, fallback = "") {
+  return String(value || fallback || "").slice(0, 10);
+}
+
+function versionRank(label) {
+  const order = {
+    "pre-overhaul": 0,
+    current: 1,
+    "overhaul deviation": 2,
+    proposed: 3
+  };
+  return order[label] ?? 9;
+}
+
+function versionFamily(node, index) {
+  const key = node.citationKey || citationKey(node.citation);
+  return index.nodes
+    .filter((candidate) => candidate.citationKey === key)
+    .sort((a, b) => {
+      const byRank = versionRank(versionLabel(a)) - versionRank(versionLabel(b));
+      if (byRank) return byRank;
+      return compareDate(a.effectiveDate || a.snapshotDate || a.retrievedAt).localeCompare(
+        compareDate(b.effectiveDate || b.snapshotDate || b.retrievedAt)
+      );
+    });
+}
+
 function buildVersions(node, index) {
-  const sameCitation = index.nodes
-    .filter((candidate) => candidate.citationKey === node.citationKey)
+  const sameCitation = versionFamily(node, index)
     .map((candidate) => ({
       label: versionLabel(candidate),
       date: candidate.effectiveDate || candidate.snapshotDate || candidate.retrievedAt || "indexed source",
@@ -228,6 +269,279 @@ function buildVersions(node, index) {
           sourceUrl: node.sourceUrl
         }
       ];
+}
+
+function normalizeDiffText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:])/g, "$1")
+    .trim();
+}
+
+function sentenceChunks(value) {
+  const normalized = normalizeDiffText(value);
+  if (!normalized) return [];
+  return normalized
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 18);
+}
+
+function computedDiff(before, after) {
+  const beforeChunks = sentenceChunks(before);
+  const afterChunks = sentenceChunks(after);
+  const beforeSet = new Set(beforeChunks.map(normalizeDiffText));
+  const afterSet = new Set(afterChunks.map(normalizeDiffText));
+  const removed = beforeChunks.filter((item) => !afterSet.has(normalizeDiffText(item))).slice(0, 6);
+  const added = afterChunks.filter((item) => !beforeSet.has(normalizeDiffText(item))).slice(0, 6);
+  const unchanged = afterChunks.filter((item) => beforeSet.has(normalizeDiffText(item))).slice(0, 4);
+  return {
+    method: "computed_diff",
+    confidence: beforeChunks.length && afterChunks.length ? "medium" : "low",
+    removed,
+    added,
+    unchanged,
+    summary:
+      removed.length || added.length
+        ? "Computed from stored text states. Review the linked sources before treating the difference as authoritative."
+        : "No substantive sentence-level difference was detected in the stored excerpts."
+  };
+}
+
+function buildDelta(node, index) {
+  const family = versionFamily(node, index);
+  const before =
+    family.find((candidate) => versionLabel(candidate) === "pre-overhaul") ||
+    family.find((candidate) => versionLabel(candidate) === "current") ||
+    family[0];
+  const after =
+    family.find((candidate) => versionLabel(candidate) === "overhaul deviation") ||
+    family.find((candidate) => versionLabel(candidate) === "proposed") ||
+    node;
+  const method = after?.metadata?.deltaMethod || after?.metadata?.lineoutMethod || "computed_diff";
+  const confidence = after?.metadata?.deltaConfidence || (method === "computed_diff" ? "medium" : "high");
+  const diff = computedDiff(before?.bodyText || before?.excerpt || "", after?.bodyText || after?.excerpt || "");
+  return {
+    available: Boolean(before && after && before.id !== after.id),
+    from: before
+      ? {
+          citation: before.citation,
+          label: versionLabel(before),
+          date: before.effectiveDate || before.snapshotDate || before.retrievedAt || FAR_BASELINE_DATE,
+          sourceUrl: before.sourceUrl
+        }
+      : null,
+    to: after
+      ? {
+          citation: after.citation,
+          label: versionLabel(after),
+          date: after.effectiveDate || after.snapshotDate || after.retrievedAt || "",
+          sourceUrl: after.sourceUrl
+        }
+      : null,
+    method,
+    confidence,
+    methodLabel: method === "official_lineout" ? "official line-out" : "computed diff",
+    adoptionCaveat:
+      versionLabel(after) === "overhaul deviation"
+        ? "Model deviation text. Whether this deviation governs a specific action depends on the buying agency's adoption. Verify with your agency's policy office."
+        : "",
+    summary: diff.summary,
+    removed: diff.removed,
+    added: diff.added,
+    unchanged: diff.unchanged
+  };
+}
+
+function buildCrosswalks(node, index) {
+  const part = farPartForNode(node);
+  const relatedCitationKeys = new Set([node.citationKey, ...(node.relatedCitationKeys || [])]);
+  const guidance = index.nodes
+    .filter((candidate) => candidate.id !== node.id && isGuidanceNode(candidate))
+    .map((candidate) => {
+      const text = `${candidate.citation || ""} ${candidate.title || ""} ${candidate.bodyText || ""}`.toLowerCase();
+      const citesPart = part && new RegExp(`\\bpart\\s+${escapeRegex(part)}\\b|\\bfar\\s+${escapeRegex(part)}\\b`, "i").test(text);
+      const citesNode = [...relatedCitationKeys].some((key) => key && text.includes(key));
+      const titleOverlap = tokenize(node.title).filter((token) => candidate.tokenSet?.has(token)).length;
+      const score = (citesNode ? 0.9 : 0) + (citesPart ? 0.25 : 0) + Math.min(0.35, titleOverlap * 0.08);
+      return { candidate, score, method: citesNode ? "citation_reference" : "text_match" };
+    })
+    .filter((item) => item.score >= 0.25)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  if (!guidance.length) {
+    return [
+      {
+        status: "unresolved",
+        method: "no_match",
+        confidence: "none",
+        note: `No relocated equivalent was found in the indexed guidance corpus as of ${new Date().toISOString().slice(0, 10)}.`,
+        binding: "not applicable"
+      }
+    ];
+  }
+  return guidance.map(({ candidate, score, method }) => ({
+    status: "candidate",
+    method,
+    confidence: score >= 0.8 ? "high" : score >= 0.45 ? "medium" : "low",
+    citation: candidate.citation,
+    title: candidate.title,
+    sourceUrl: candidate.sourceUrl,
+    binding: "non-regulatory guidance",
+    note:
+      method === "citation_reference"
+        ? "Derived from a citation reference in the indexed guidance source."
+        : "Derived by conservative text matching against indexed guidance. Treat as a lead, not an official crosswalk."
+  }));
+}
+
+function buildProposedChanges(node, index) {
+  const keys = new Set([node.citationKey, citationKey(farPartForNode(node)), ...(node.relatedCitationKeys || [])].filter(Boolean));
+  const proposed = index.nodes
+    .filter((candidate) => versionLabel(candidate) === "proposed")
+    .map((candidate) => {
+      const text = `${candidate.citation || ""} ${candidate.title || ""} ${candidate.bodyText || ""} ${candidate.excerpt || ""}`.toLowerCase();
+      const citations = extractCitations(text);
+      const citationMatch = citations.some((citation) => keys.has(citationKey(citation)));
+      const tokenOverlap = tokenize(node.title).filter((token) => candidate.tokenSet?.has(token)).length;
+      const score = (citationMatch ? 0.8 : 0) + Math.min(0.3, tokenOverlap * 0.06);
+      return { candidate, score, citationMatch };
+    })
+    .filter((item) => item.score >= 0.18)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  return proposed.map(({ candidate, score, citationMatch }) => ({
+    status: "pending",
+    citation: candidate.citation,
+    title: candidate.title,
+    sourceUrl: candidate.sourceUrl,
+    publishedDate: candidate.effectiveDate || candidate.retrievedAt || "",
+    commentDeadline: candidate.metadata?.commentDeadline || FAR_OVERHAUL_COMMENT_DEADLINE,
+    docketId: candidate.metadata?.docketId || candidate.metadata?.docket_id || "",
+    method: citationMatch ? "amendatory_citation_reference" : "text_match",
+    confidence: score >= 0.75 ? "high" : "low",
+    badge: `Proposed rule, not in effect. Comments close ${candidate.metadata?.commentDeadline || FAR_OVERHAUL_COMMENT_DEADLINE}.`
+  }));
+}
+
+function buildCoverage(index, sourceAudit = null) {
+  const byRegime = index.nodes.reduce((acc, node) => {
+    const regime = node.regime || "Source";
+    acc[regime] = (acc[regime] || 0) + 1;
+    return acc;
+  }, {});
+  const familyCounts = new Map();
+  for (const node of index.nodes) {
+    if (!node.citationKey) continue;
+    familyCounts.set(node.citationKey, (familyCounts.get(node.citationKey) || 0) + 1);
+  }
+  const parts = index.parts || [];
+  const sourceNodes = index.sourceStats?.sourceDatabaseNodes || 0;
+  const ecfrNodes = index.sourceStats?.ecfrDatabaseNodes || 0;
+  const proposedNodes = byRegime["Federal Register proposed rule"] || 0;
+  const overhaulNodes = byRegime["FAR Overhaul"] || 0;
+  const guidanceNodes = index.nodes.filter(isGuidanceNode).length;
+  const historyNodes = byRegime["eCFR history"] || 0;
+  const currentEcfrNodes = byRegime["eCFR current full text"] || ecfrNodes;
+  const familiesWithVersions = new Set([...familyCounts].filter(([, count]) => count > 1).map(([key]) => key));
+  const rows = [
+    {
+      workstream: "A",
+      label: "Version-delta engine",
+      status: familiesWithVersions.size ? "partial" : "pending",
+      parsed: familiesWithVersions.size,
+      total: index.nodes.length,
+      method: "computed_diff where no official line-out is stored",
+      gap: "Official line-out parsing and agency-adoption source remain unresolved unless future refresh metadata supplies them."
+    },
+    {
+      workstream: "B",
+      label: "Guidance crosswalk",
+      status: guidanceNodes ? "partial" : "pending",
+      parsed: guidanceNodes,
+      total: overhaulNodes,
+      method: "official_crosswalk when stored, otherwise citation_reference or text_match",
+      gap: "No relocated-content edge is treated as official unless the edge method says official_crosswalk."
+    },
+    {
+      workstream: "C",
+      label: "Accuracy benchmark",
+      status: index.evaluation?.cases ? "interim" : "pending",
+      parsed: index.evaluation?.cases || 0,
+      total: 70,
+      method: "local deterministic harness",
+      gap: "Practitioner-reviewed 60 answerable plus 10 trap question threshold has not been met in the stored set."
+    },
+    {
+      workstream: "D",
+      label: "Proposed-rule full text and comment support",
+      status: proposedNodes ? "partial" : "pending",
+      parsed: proposedNodes,
+      total: proposedNodes,
+      method: "Federal Register indexed nodes with unresolved amendatory mappings unless metadata says parsed",
+      gap: "Full amendatory-instruction parsing and docket enrichment are still coverage gaps."
+    }
+  ];
+  return {
+    generatedAt: index.generatedAt,
+    sourceAuditGeneratedAt: sourceAudit?.generatedAt || "",
+    posture: sourceAudit?.posture || "partial corpus",
+    claim:
+      sourceAudit?.claim ||
+      "ClauseFinder reports parsed coverage and unresolved gaps. Full source-ingestion workstreams require reviewer signoff.",
+    baselineDate: FAR_BASELINE_DATE,
+    commentDeadline: FAR_OVERHAUL_COMMENT_DEADLINE,
+    byRegime,
+    sourceStats: index.sourceStats || {},
+    parts,
+    rows,
+    totals: {
+      nodes: index.nodes.length,
+      sourceNodes,
+      ecfrNodes,
+      currentEcfrNodes,
+      historyNodes,
+      proposedNodes,
+      overhaulNodes,
+      guidanceNodes,
+      versionFamilies: familiesWithVersions.size
+    },
+    caveats: [
+      "Model deviation adoption is not inferred. Users must verify agency adoption.",
+      "Derived crosswalk and proposed-change mappings are labeled by method and confidence.",
+      "Coverage gaps are displayed instead of silently filled."
+    ],
+    sourceAudit: sourceAudit
+      ? {
+          farOverhaul: {
+            sourceUrl: sourceAudit.sources?.farOverhaul?.sourceUrl,
+            candidateDocuments: sourceAudit.sources?.farOverhaul?.candidateDocuments || 0,
+            categoryCounts: sourceAudit.sources?.farOverhaul?.categoryCounts || {},
+            gaps: sourceAudit.sources?.farOverhaul?.gaps || []
+          },
+          ecfr: {
+            title48: sourceAudit.sources?.ecfr?.title48 || {},
+            versionsEndpoint: sourceAudit.sources?.ecfr?.versionsEndpoint || {},
+            sampleFullText: sourceAudit.sources?.ecfr?.sampleFullText || {},
+            gaps: sourceAudit.sources?.ecfr?.gaps || []
+          },
+          federalRegister: {
+            returned: sourceAudit.sources?.federalRegister?.returned || 0,
+            total: sourceAudit.sources?.federalRegister?.total || 0,
+            currentTrancheReturned: sourceAudit.sources?.federalRegister?.currentTrancheReturned || 0,
+            deadlineCounts: sourceAudit.sources?.federalRegister?.deadlineCounts || {},
+            currentTrancheDeadlineCounts: sourceAudit.sources?.federalRegister?.currentTrancheDeadlineCounts || {},
+            documents: (sourceAudit.sources?.federalRegister?.documents || []).slice(0, 20),
+            currentTrancheDocuments: (sourceAudit.sources?.federalRegister?.currentTrancheDocuments || []).slice(0, 20),
+            gaps: sourceAudit.sources?.federalRegister?.gaps || []
+          },
+          regulationsGov: sourceAudit.sources?.regulationsGov || {},
+          reviewerSignoff: sourceAudit.reviewerSignoff || [],
+          demoRecommendation: sourceAudit.demoRecommendation || {}
+        }
+      : null
+  };
 }
 
 function contextChecklist(node, context) {
@@ -289,12 +603,16 @@ function buildClausePassport(node, context, index) {
   const checklist = contextChecklist(node, context);
   const missingFacts = checklist.filter((item) => item.status === "unknown").map((item) => item.label);
   const text = `${node.title || ""} ${node.bodyText || ""} ${node.prescription || ""}`;
+  const delta = buildDelta(node, index);
+  const proposedChanges = buildProposedChanges(node, index);
+  const crosswalks = buildCrosswalks(node, index);
   return {
     origin: node.regime || "Public source",
     sourceUrl: node.sourceUrl,
     retrievedAt: node.retrievedAt || "",
     effectiveDate: node.effectiveDate || node.snapshotDate || "",
     versionStatus: versionLabel(node),
+    bindingStatus: bindingLabel(node),
     prescribedBy,
     appliesWhen: node.prescription || "No prescription was extracted. Use the indexed text and source link for reviewer verification.",
     doesNotApplyWhen:
@@ -302,14 +620,25 @@ function buildClausePassport(node, context, index) {
     missingFacts,
     checklist,
     airForceStack: buildAirForceStack(node),
+    delta,
+    crosswalks,
+    proposedChanges,
+    commentSupport: proposedChanges.map((item) => ({
+      docketId: item.docketId,
+      commentDeadline: item.commentDeadline,
+      sourceUrl: item.sourceUrl,
+      method: item.method,
+      confidence: item.confidence
+    })),
     diff: {
-      status: versions.length > 1 ? "comparison available" : "single indexed state",
-      summary:
-        versions.length > 1
-          ? "Multiple indexed states exist for this citation. Compare source dates and labels before treating the current text as controlling."
-          : "Only one indexed state is available for this result. Use the source link for full verification.",
-      beforeLabel: versions.find((item) => item.label === "pre-overhaul")?.date || "",
-      afterLabel: versions.find((item) => item.label !== "pre-overhaul")?.date || node.effectiveDate || "",
+      status: delta.available ? "comparison available" : "single indexed state",
+      summary: delta.available
+        ? delta.summary
+        : "Only one indexed state is available for this result. Use the source link for full verification.",
+      beforeLabel: delta.from?.date || "",
+      afterLabel: delta.to?.date || node.effectiveDate || "",
+      method: delta.method,
+      confidence: delta.confidence,
       textSignals: [
         text.includes("shall") ? "Mandatory-language signal found in retrieved text." : "No strong mandatory-language signal found in the retrieved text excerpt.",
         text.includes("commercial") ? "Commerciality signal found." : "Commerciality is not explicit in the retrieved text excerpt.",
@@ -328,16 +657,40 @@ function buildClausePassport(node, context, index) {
 
 async function loadEvaluationSummary() {
   if (evaluationCache) return evaluationCache;
+  let benchmark = null;
+  try {
+    benchmark = JSON.parse(await readFile(BENCHMARK_RESULTS_PATH, "utf8"));
+  } catch {
+    benchmark = null;
+  }
   try {
     const raw = await readFile(ACCURACY_CASES_PATH, "utf8");
     const cases = JSON.parse(raw);
+    const answerable = cases.filter((item) => item.expectedBehavior !== "no_match");
+    const traps = cases.filter((item) => item.expectedBehavior === "no_match" || item.expectedBehavior === "caveat_required");
     evaluationCache = {
-      label: "Local gold-set harness",
+      label: benchmark?.label || "Local gold-set harness",
       cases: cases.length,
-      lastRun: "latest backend test run",
+      reviewedCases: cases.filter((item) => Array.isArray(item.reviewedBy) && item.reviewedBy.length).length,
+      answerableCases: answerable.length,
+      trapCases: traps.length,
+      lastRun: benchmark?.generatedAt || "latest backend test run",
       topOneCases: cases.filter((item) => item.expectedTopOne?.length).length,
       topFiveCases: cases.filter((item) => item.expectedTopFive?.length).length,
-      note: "Use npm --prefix backend test before demos. The public UI reports the harness size, not a compliance certification."
+      topOneRate: benchmark?.topOneRate ?? null,
+      topThreeRate: benchmark?.topThreeRate ?? null,
+      topFiveRate: benchmark?.topFiveRate ?? null,
+      mrr: benchmark?.meanReciprocalRank ?? null,
+      refusalPrecision: benchmark?.refusalPrecision ?? null,
+      refusalRecall: benchmark?.refusalRecall ?? null,
+      citationResolutionRate: benchmark?.citationResolutionRate ?? null,
+      benchmarkStatus:
+        cases.length >= 70 && cases.every((item) => Array.isArray(item.reviewedBy) && item.reviewedBy.length)
+          ? "reviewed"
+          : "interim, partial corpus",
+      note:
+        benchmark?.note ||
+        "Use npm --prefix backend test before demos. The public UI reports interim metrics until the practitioner-reviewed set reaches the design threshold."
     };
   } catch {
     evaluationCache = {
@@ -350,6 +703,16 @@ async function loadEvaluationSummary() {
     };
   }
   return evaluationCache;
+}
+
+async function loadSourceCoverageReport() {
+  if (sourceCoverageCache) return sourceCoverageCache;
+  try {
+    sourceCoverageCache = JSON.parse(await readFile(SOURCE_COVERAGE_REPORT_PATH, "utf8"));
+  } catch {
+    sourceCoverageCache = null;
+  }
+  return sourceCoverageCache;
 }
 
 function rowToNode(row) {
@@ -469,6 +832,8 @@ export async function loadIndex() {
   if (indexCache) return indexCache;
   const raw = await readFile(INDEX_PATH, "utf8");
   const parsed = JSON.parse(raw);
+  const evaluation = await loadEvaluationSummary();
+  const sourceAudit = await loadSourceCoverageReport();
   const staticNodes = parsed.nodes || [];
   const sourceDatabaseNodes = await loadSourceDatabaseNodes();
   const primaryNodes = sourceDatabaseNodes.length ? sourceDatabaseNodes : staticNodes;
@@ -498,9 +863,12 @@ export async function loadIndex() {
       sourceDatabaseNodes: sourceDatabaseNodes.length,
       ecfrDatabaseNodes: ecfrDatabaseNodes.length
     },
+    evaluation,
+    sourceAudit,
     docFreq,
     averageLength: nodes.length ? totalLength / nodes.length : 1
   };
+  indexCache.coverage = buildCoverage(indexCache, sourceAudit);
   return indexCache;
 }
 
@@ -700,6 +1068,12 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
         whyRelevant: plainReason(item.node, queryTokens, item.contextReasons, item.citationScore),
         mightNotApply:
           "This is a candidate authority, not a compliance verdict. Verify the prescription, dates, agency supplements, and contract facts.",
+        badges: [
+          versionLabel(item.node) === "proposed" ? `Proposed rule, not in effect. Comments close ${FAR_OVERHAUL_COMMENT_DEADLINE}.` : "",
+          versionLabel(item.node) === "overhaul deviation" ? "Model deviation. Verify buying-agency adoption." : "",
+          isGuidanceNode(item.node) ? "Non-regulatory guidance." : "",
+          buildProposedChanges(item.node, index).length ? `In flux. Proposed-rule material may affect this area by ${FAR_OVERHAUL_COMMENT_DEADLINE}.` : ""
+        ].filter(Boolean),
         version: {
           label: versionLabel(item.node),
           effectiveStart: item.node.effectiveDate || item.node.snapshotDate || ""
@@ -729,13 +1103,18 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
 
 export async function getMeta() {
   const index = await loadIndex();
-  const evaluation = await loadEvaluationSummary();
   return {
     generatedAt: index.generatedAt,
     sourceBaseUrl: index.sourceBaseUrl,
     totalNodes: index.nodes.length,
     parts: index.parts || [],
     sourceStats: index.sourceStats || {},
-    evaluation
+    evaluation: index.evaluation,
+    coverage: index.coverage
   };
+}
+
+export async function getCoverage() {
+  const index = await loadIndex();
+  return index.coverage;
 }

@@ -51,6 +51,38 @@ async function ensureSchema(client) {
     create index if not exists source_nodes_citation_idx on source_nodes (citation);
     create index if not exists source_nodes_regime_idx on source_nodes (regime);
     create index if not exists source_nodes_part_idx on source_nodes (part);
+    create table if not exists source_edges (
+      id bigserial primary key,
+      created_at timestamptz not null default now(),
+      from_node_id text not null,
+      to_node_id text,
+      edge_type text not null check (edge_type in ('version_of', 'delta', 'removed_content_relocated_to', 'proposed_change')),
+      method text not null,
+      confidence text not null check (confidence in ('high', 'medium', 'low', 'none')),
+      source_url text,
+      retrieved_at text,
+      version_label text,
+      details jsonb not null default '{}'::jsonb
+    );
+    create table if not exists benchmark_runs (
+      id bigserial primary key,
+      created_at timestamptz not null default now(),
+      build_label text not null default 'local',
+      mode text not null default 'deterministic',
+      case_count integer not null default 0,
+      reviewed_case_count integer not null default 0,
+      top_one_rate numeric,
+      top_three_rate numeric,
+      top_five_rate numeric,
+      mean_reciprocal_rank numeric,
+      refusal_precision numeric,
+      refusal_recall numeric,
+      caveat_compliance numeric,
+      citation_resolution_rate numeric,
+      details jsonb not null default '{}'::jsonb
+    );
+    create index if not exists source_edges_from_idx on source_edges (from_node_id);
+    create index if not exists source_edges_type_idx on source_edges (edge_type);
   `);
 }
 
