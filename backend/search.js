@@ -58,6 +58,97 @@ const STOP_WORDS = new Set([
   "with"
 ]);
 
+const ACQUISITION_SCOPE_TERMS = new Set([
+  "acquisition",
+  "acquisitions",
+  "agreement",
+  "agreements",
+  "blanket",
+  "cage",
+  "clause",
+  "clauses",
+  "contract",
+  "contracts",
+  "contracting",
+  "contractor",
+  "contractors",
+  "cots",
+  "cui",
+  "cyber",
+  "daffars",
+  "deviation",
+  "dfars",
+  "dod",
+  "ecfr",
+  "fapiis",
+  "far",
+  "invoice",
+  "micro-purchase",
+  "offeror",
+  "offerors",
+  "ordering",
+  "procurement",
+  "proposal",
+  "provision",
+  "provisions",
+  "purchasing",
+  "registration",
+  "sam",
+  "set-aside",
+  "simplified",
+  "solicitation",
+  "source-selection",
+  "subcontract",
+  "subcontracts",
+  "supplies",
+  "supply",
+  "threshold",
+  "uei",
+  "usg",
+  "vendor",
+  "vendors"
+]);
+
+const ACQUISITION_CONTEXT_TERMS = new Set([
+  "agency",
+  "air",
+  "award",
+  "awards",
+  "buy",
+  "buying",
+  "commercial",
+  "competition",
+  "competitive",
+  "construction",
+  "dod",
+  "federal",
+  "force",
+  "funds",
+  "government",
+  "payment",
+  "payments",
+  "performance",
+  "purchase",
+  "purchases",
+  "service",
+  "services",
+  "supplies",
+  "supply",
+  "usg"
+]);
+
+const ACQUISITION_SCOPE_PATTERNS = [
+  /\b(?:far|dfars|daffars|ecfr)\b/i,
+  /\b48\s+cfr\b/i,
+  /\bair\s+force\b/i,
+  /\bcontract(?:s|ing|or|ors)?\b/i,
+  /\bsystem for award management\b/i,
+  /\bfederal acquisition regulation\b/i,
+  /\bdefense federal acquisition regulation supplement\b/i,
+  /\bdepartment of the air force federal acquisition regulation supplement\b/i,
+  /\b(?:micro[-\s]?purchase|simplified acquisition|source[-\s]?selection|set[-\s]?aside)\b/i
+];
+
 let indexCache;
 let evaluationCache;
 let sourceCoverageCache;
@@ -116,6 +207,13 @@ export function detectSensitive(value) {
     ["personal identifier", /\bssn\b|social security|date of birth|bank account/]
   ];
   return checks.filter(([, pattern]) => pattern.test(text)).map(([label]) => label);
+}
+
+function isLikelyAcquisitionQuery(query, queryTokens, queryCitations) {
+  if (queryCitations.length) return true;
+  if (ACQUISITION_SCOPE_PATTERNS.some((pattern) => pattern.test(query))) return true;
+  if (queryTokens.some((token) => ACQUISITION_SCOPE_TERMS.has(token))) return true;
+  return queryTokens.filter((token) => ACQUISITION_CONTEXT_TERMS.has(token)).length >= 2;
 }
 
 function moneyCue(question) {
@@ -1000,6 +1098,17 @@ function plainReason(result, queryTokens, contextReasons, citationScore) {
     : `Ranked by context and related FAR language.${context}`;
 }
 
+function noCandidateAnswer(reason) {
+  return {
+    summary: reason,
+    caveats: [
+      "ClauseFinder searches public acquisition-rule sources and returns candidate authorities only. It does not answer general preference, office, catering, or non-procurement questions.",
+      "No compliance conclusion is provided. Reframe the question as a FAR, DFARS, DAFFARS, eCFR, deviation, proposed-rule, contract clause, prescription, or acquisition scenario if you need regulatory research."
+    ],
+    bestFitCitations: []
+  };
+}
+
 export async function searchFar({ query, context = {}, limit = 8, includeAnswer = true }) {
   const trimmed = String(query || "").trim();
   const inferredContext = inferContext(trimmed, context);
@@ -1019,6 +1128,21 @@ export async function searchFar({ query, context = {}, limit = 8, includeAnswer 
   const index = await loadIndex();
   const queryTokens = tokenize(trimmed);
   const queryCitations = extractCitations(trimmed);
+  const scopeReason =
+    "No acquisition-rule signal was detected. Ask a FAR, DFARS, DAFFARS, eCFR, deviation, proposed-rule, clause, prescription, or contract-scenario question.";
+  if (!isLikelyAcquisitionQuery(trimmed, queryTokens, queryCitations)) {
+    return {
+      query: trimmed,
+      context: inferredContext,
+      sensitiveHits,
+      generatedAt: index.generatedAt,
+      sourceBaseUrl: index.sourceBaseUrl,
+      totalNodes: index.nodes.length,
+      results: [],
+      noMatchReason: scopeReason,
+      answer: includeAnswer ? noCandidateAnswer(scopeReason) : null
+    };
+  }
   const rawScores = index.nodes.map((node) => {
     const lexical = bm25(node, queryTokens, index);
     const citationScore = citationHitScore(node, queryCitations, trimmed);

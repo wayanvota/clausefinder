@@ -107,5 +107,13 @@
     "expectedTopOne": [
       "52.232-33"
     ]
+  },
+  {
+    "id": "random-office-lunch-trap",
+    "query": "What is the best pizza topping for an office lunch?",
+    "context": {
+      "fundingLayer": "Air Force"
+    },
+    "expectedBehavior": "no_match"
   }
 ]

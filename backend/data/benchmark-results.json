@@ -1,17 +1,17 @@
 {
   "ok": true,
   "label": "ClauseFinder deterministic benchmark",
-  "generatedAt": "2026-07-07T06:37:21.940Z",
-  "cases": 9,
+  "generatedAt": "2026-07-07T06:54:41.474Z",
+  "cases": 10,
   "answerableCases": 9,
-  "trapCases": 0,
+  "trapCases": 1,
   "reviewedCases": 0,
   "topOneRate": 1,
   "topThreeRate": 1,
   "topFiveRate": 1,
   "meanReciprocalRank": 1,
-  "refusalPrecision": null,
-  "refusalRecall": null,
+  "refusalPrecision": 1,
+  "refusalRecall": 1,
   "caveatCompliance": null,
   "citationResolutionRate": 1,
   "note": "Interim, partial corpus. The design target is at least 60 reviewed answerable questions and 10 reviewed trap questions.",
@@ -169,6 +169,13 @@
         "252.232-7011",
         "52.232-35"
       ]
+    },
+    {
+      "id": "random-office-lunch-trap",
+      "passed": true,
+      "topOne": "",
+      "topThree": [],
+      "topFive": []
     }
   ]
 }
