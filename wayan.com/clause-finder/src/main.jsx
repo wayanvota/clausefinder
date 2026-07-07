@@ -3,7 +3,12 @@ import { createRoot } from "react-dom/client";
 import { contextOptions, examples } from "./data";
 import "./styles.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const DEFAULT_API_BASE =
+  typeof window !== "undefined" &&
+  !["localhost", "127.0.0.1", ""].includes(window.location.hostname)
+    ? "https://clausefinder-api.onrender.com"
+    : "";
+const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
 const SOURCE_LINKS = [
   ["FAR", "Current FAR text", "https://www.acquisition.gov/far"],
   ["DFARS", "DoD supplement", "https://www.acquisition.gov/dfars"],
