@@ -1,9 +1,9 @@
 {
   "ok": true,
   "label": "ClauseFinder deterministic benchmark",
-  "generatedAt": "2026-07-07T06:54:41.474Z",
-  "cases": 10,
-  "answerableCases": 9,
+  "generatedAt": "2026-07-08T09:20:58.539Z",
+  "cases": 11,
+  "answerableCases": 10,
   "trapCases": 1,
   "reviewedCases": 0,
   "topOneRate": 1,
@@ -168,6 +168,23 @@
         "52.232-35",
         "252.232-7011",
         "52.232-35"
+      ]
+    },
+    {
+      "id": "export-controls-f35",
+      "passed": true,
+      "topOne": "225.7901-2",
+      "topThree": [
+        "225.7901-2",
+        "225.7901-2",
+        "252.225-7048"
+      ],
+      "topFive": [
+        "225.7901-2",
+        "225.7901-2",
+        "252.225-7048",
+        "225.7901-3",
+        "225.7901-3"
       ]
     },
     {

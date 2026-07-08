@@ -80,8 +80,15 @@ const ACQUISITION_SCOPE_TERMS = new Set([
   "dfars",
   "dod",
   "ecfr",
+  "ear",
+  "export",
+  "export-controlled",
+  "exports",
   "fapiis",
   "far",
+  "fms",
+  "itar",
+  "munitions",
   "invoice",
   "micro-purchase",
   "offeror",
@@ -134,6 +141,8 @@ const ACQUISITION_CONTEXT_TERMS = new Set([
   "services",
   "supplies",
   "supply",
+  "technical",
+  "technology",
   "usg"
 ]);
 
@@ -142,6 +151,10 @@ const ACQUISITION_SCOPE_PATTERNS = [
   /\b48\s+cfr\b/i,
   /\bair\s+force\b/i,
   /\bcontract(?:s|ing|or|ors)?\b/i,
+  /\bf-?35\b/i,
+  /\bexport[-\s]?control(?:led|s)?\b/i,
+  /\binternational traffic in arms regulations\b/i,
+  /\bexport administration regulations\b/i,
   /\bsystem for award management\b/i,
   /\bfederal acquisition regulation\b/i,
   /\bdefense federal acquisition regulation supplement\b/i,
@@ -1077,6 +1090,13 @@ function domainBoost(node, query, context) {
   if (/(safeguard|covered contractor information|cyber|information system|security requirement)/.test(text)) {
     if (/52\.204-(2|21)/.test(String(node.citation))) boost += 2;
     if (/safeguarding|covered contractor information systems|security requirements/i.test(`${node.title} ${node.bodyText}`)) boost += 1.1;
+  }
+  if (/(export[-\s]?control|export-controlled|itar|ear|f-?35|foreign military sales|munitions|technical data)/.test(text)) {
+    const nodeText = `${node.title} ${node.bodyText}`;
+    if (/^225\.7901/.test(String(node.citation))) boost += 7;
+    if (String(node.citation) === "252.225-7048") boost += 12;
+    if (/export-controlled|export control|international traffic in arms|export administration|technical data|foreign military sales/i.test(nodeText)) boost += 3;
+    else boost -= 4;
   }
   if (context.commerciality === "Commercial" && String(node.citation).startsWith("12.")) {
     boost += 0.4;

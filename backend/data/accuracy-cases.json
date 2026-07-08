@@ -109,6 +109,22 @@
     ]
   },
   {
+    "id": "export-controls-f35",
+    "query": "What are export controls on F-35?",
+    "context": {
+      "acquisitionType": "Service",
+      "commerciality": "Commercial",
+      "valueBand": "Above simplified acquisition threshold",
+      "competition": "Full and open",
+      "fundingLayer": "Air Force",
+      "urgency": "Normal"
+    },
+    "expectedTopFive": [
+      "225.7901-2",
+      "252.225-7048"
+    ]
+  },
+  {
     "id": "random-office-lunch-trap",
     "query": "What is the best pizza topping for an office lunch?",
     "context": {

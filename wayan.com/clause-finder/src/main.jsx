@@ -203,12 +203,21 @@ function IntakePanel({
 
       <div className="button-row">
         <button className="primary-button" type="button" onClick={onClarify} disabled={loading || clarifying}>
-          {clarifying ? "Checking facts" : "Start clause search"}
+          {clarifying ? "Checking facts..." : "Ask clarifying questions"}
         </button>
         <button className="secondary-button" type="button" onClick={onSearch} disabled={loading || clarifying}>
-          {loading ? "Searching" : "Search now"}
+          {loading ? "Searching..." : "Search now"}
         </button>
       </div>
+      <p className="button-help">
+        Ask clarifying questions checks for missing facts first. Search now skips questions and ranks candidates immediately.
+      </p>
+      {(loading || clarifying) && (
+        <div className="progress-box" role="status" aria-live="polite">
+          <strong>{clarifying ? "Checking which facts matter." : "Searching indexed public sources."}</strong>
+          <span>{clarifying ? "The tool may search automatically if no more facts are needed." : "Ranking FAR, DFARS, DAFFARS, eCFR, deviation, and proposed-rule candidates."}</span>
+        </div>
+      )}
 
       <div className="example-list">
         <span>Try a query</span>
@@ -332,13 +341,19 @@ function ResultCard({ result, index, selected, onSelect, feedback, setFeedback }
   );
 }
 
-function ResultsPanel({ results, selectedId, setSelectedId, feedback, setFeedback, error, noMatchReason }) {
+function ResultsPanel({ results, selectedId, setSelectedId, feedback, setFeedback, error, noMatchReason, loading, clarifying }) {
   return (
-    <main className="panel results-panel">
+    <main className="panel results-panel" aria-busy={loading || clarifying}>
       <div className="panel-title results-title">
         <span>Ranked candidate authorities</span>
-        <small>{results.length ? `Showing ${results.length} candidates` : "No result selected"}</small>
+        <small>{loading || clarifying ? "Working" : results.length ? `Showing ${results.length} candidates` : "No result selected"}</small>
       </div>
+      {(loading || clarifying) && (
+        <div className="progress-box result-progress" role="status" aria-live="polite">
+          <strong>{clarifying ? "Checking facts before search..." : "Searching public acquisition sources..."}</strong>
+          <span>{clarifying ? "ClauseFinder is looking for clarifying questions that improve retrieval." : "ClauseFinder is ranking candidate authorities and preparing a grounded summary."}</span>
+        </div>
+      )}
       {error && <div className="warning-box"><strong>Search failed.</strong><p>{error}</p></div>}
       {results.length ? (
         <div className="results-list">
@@ -1077,6 +1092,8 @@ function ToolPage({
           setFeedback={setFeedback}
           error={error}
           noMatchReason={noMatchReason}
+          loading={loading}
+          clarifying={clarifying}
         />
         <VerificationPanel
           result={selected}

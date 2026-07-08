@@ -292,6 +292,38 @@ input {
   gap: 8px;
 }
 
+.button-help {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.progress-box {
+  margin-top: 12px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--border));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--blue) 7%, var(--surface));
+  padding: 11px 12px;
+}
+
+.progress-box strong {
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.progress-box span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.result-progress {
+  margin-bottom: 12px;
+}
+
 .primary-button,
 .secondary-button,
 .example-list button,
