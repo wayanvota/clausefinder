@@ -168,7 +168,7 @@ Do not commit `.env`, `.env.*`, database connection strings, API keys, query log
 
 ## License And Reuse
 
-No open-source license has been selected yet. The repository is public for transparency, review, and portfolio demonstration. Reuse rights should be treated as reserved until a license is added.
+ClauseFinder is released under the [0BSD license](LICENSE). You may use, copy, modify, and distribute the software for any purpose, with or without attribution.
 
 ## Related Notes
 
