@@ -9,6 +9,10 @@ const DEFAULT_API_BASE =
     ? "https://clausefinder-api.onrender.com"
     : "";
 const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
+const PROXY_BASE =
+  typeof window !== "undefined" && !["localhost", "127.0.0.1", ""].includes(window.location.hostname)
+    ? "./api.php"
+    : "";
 const SOURCE_LINKS = [
   ["FAR", "Current FAR text", "https://www.acquisition.gov/far"],
   ["DFARS", "DoD supplement", "https://www.acquisition.gov/dfars"],
@@ -61,12 +65,21 @@ function downloadJson(payload) {
 }
 
 async function apiJson(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const requestOptions = {
     headers: { "content-type": "application/json" },
     ...options
-  });
-  if (!response.ok) throw new Error(`API ${path} failed with ${response.status}`);
-  return response.json();
+  };
+  try {
+    const response = await fetch(`${API_BASE}${path}`, requestOptions);
+    if (!response.ok) throw new Error(`API ${path} failed with ${response.status}`);
+    return response.json();
+  } catch (error) {
+    if (!PROXY_BASE || !/^https?:\/\//.test(API_BASE)) throw error;
+    const proxyUrl = `${PROXY_BASE}?path=${encodeURIComponent(path)}`;
+    const response = await fetch(proxyUrl, requestOptions);
+    if (!response.ok) throw new Error(`API ${path} failed with ${response.status}`);
+    return response.json();
+  }
 }
 
 function Header({ activePage, setActivePage, meta, onExport }) {
