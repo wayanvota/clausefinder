@@ -1,44 +1,12 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { decodeEntities, stripHtml } from "./html-utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = join(__dirname, "..", "data", "far-index.json");
 const ACQ_BASE = "https://www.acquisition.gov";
 const FAR_BASE = `${ACQ_BASE}/far`;
-
-const ENTITY_MAP = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "-",
-  mdash: "-",
-  rsquo: "'",
-  lsquo: "'",
-  rdquo: '"',
-  ldquo: '"'
-};
-
-function decodeEntities(value) {
-  return String(value || "")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
-    .replace(/&([a-z]+);/gi, (_, entity) => ENTITY_MAP[entity] || " ");
-}
-
-function stripHtml(html) {
-  return decodeEntities(
-    String(html || "")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
 
 function stripXml(xml) {
   return decodeEntities(
