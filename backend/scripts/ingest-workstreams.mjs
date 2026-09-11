@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { decodeEntities, stripHtml } from "./html-utils.mjs";
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,39 +22,6 @@ const PDF_LIMIT = Number(process.env.RFO_PDF_LIMIT || 40);
 const FAR_PART_GUIDE = "https://www.acquisition.gov/far-overhaul/far-part-deviation-guide";
 const PRACTITIONER_ALBUMS = "https://www.acquisition.gov/far-overhaul/practitioner-albums";
 
-const ENTITY_MAP = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "-",
-  mdash: "-",
-  rsquo: "'",
-  lsquo: "'",
-  rdquo: '"',
-  ldquo: '"'
-};
-
-function decodeEntities(value) {
-  return String(value || "")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
-    .replace(/&([a-z]+);/gi, (_, entity) => ENTITY_MAP[entity] || " ");
-}
-
-function stripMarkup(value) {
-  return decodeEntities(
-    String(value || "")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
-
 function absoluteUrl(href, base) {
   try {
     return new URL(decodeEntities(href), base).toString();
@@ -64,7 +32,7 @@ function absoluteUrl(href, base) {
 
 function extractLinks(html, base) {
   return [...String(html || "").matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
-    .map(([, href, label]) => ({ url: absoluteUrl(href, base), label: stripMarkup(label) }))
+    .map(([, href, label]) => ({ url: absoluteUrl(href, base), label: stripHtml(label) }))
     .filter((item) => item.url && item.label);
 }
 
@@ -142,8 +110,8 @@ function parseRfoHtmlSections({ html, url, part, retrievedAt }) {
   );
   const nodes = [];
   for (const match of articleMatches) {
-    const heading = stripMarkup(match.heading);
-    const body = stripMarkup(match.body);
+    const heading = stripHtml(match.heading);
+    const body = stripHtml(match.body);
     const citation = match.citation;
     if (!citation || body.length < 30 || /reserved/i.test(`${heading} ${body}`)) continue;
     nodes.push({

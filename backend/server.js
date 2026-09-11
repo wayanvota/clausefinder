@@ -48,9 +48,9 @@ const server = http.createServer(async (req, res) => {
     }
     return sendJson(res, 404, { error: "Not found" });
   } catch (error) {
+    console.error("ClauseFinder request failed", error);
     return sendJson(res, 500, {
-      error: "ClauseFinder backend error",
-      detail: process.env.NODE_ENV === "production" ? undefined : String(error?.stack || error)
+      error: "ClauseFinder backend error"
     });
   }
 });

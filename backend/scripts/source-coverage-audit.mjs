@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { decodeEntities, stripHtml } from "./html-utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = process.env.SOURCE_COVERAGE_REPORT_PATH || join(__dirname, "..", "data", "source-coverage-report.json");
@@ -16,39 +17,6 @@ const SOURCES = {
     "https://www.federalregister.gov/api/v1/documents.json?per_page=100&conditions%5Btype%5D%5B%5D=PRORULE&conditions%5Bterm%5D=Federal%20Acquisition%20Regulation%20Revolutionary",
   regulationsGovApi: "https://open.gsa.gov/api/regulationsgov/"
 };
-
-const ENTITY_MAP = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "-",
-  mdash: "-",
-  rsquo: "'",
-  lsquo: "'",
-  rdquo: '"',
-  ldquo: '"'
-};
-
-function decodeEntities(value) {
-  return String(value || "")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
-    .replace(/&([a-z]+);/gi, (_, entity) => ENTITY_MAP[entity] || " ");
-}
-
-function stripHtml(html) {
-  return decodeEntities(
-    String(html || "")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-  );
-}
 
 async function fetchText(url, as = "text") {
   const response = await fetch(url, { headers: { "user-agent": USER_AGENT } });
@@ -237,7 +205,7 @@ async function auditRegulationsGov() {
   return {
     sourceUrl: SOURCES.regulationsGovApi,
     mentionsApiKey: /api key/i.test(text),
-    mentionsCommentPostingActivation: /comment posting|activation|api.data.gov/i.test(text),
+    mentionsCommentPostingActivation: /comment posting|activation|api\.data\.gov/i.test(text),
     verifiedAt: new Date().toISOString(),
     gaps: [
       "Regulations.gov API enrichment needs a free API key.",
