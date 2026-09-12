@@ -16,7 +16,12 @@
     "ingest:workstreams": "npm --prefix backend run ingest:workstreams",
     "bench": "npm --prefix backend run bench",
     "audit:sources": "npm --prefix backend run audit:sources",
-    "test:backend": "npm --prefix backend test"
+    "test:backend": "npm --prefix backend test",
+    "test:e2e": "playwright test",
+    "test:ci": "npm run test:backend && npm run build && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   },
   "workspaces": [
     "backend",

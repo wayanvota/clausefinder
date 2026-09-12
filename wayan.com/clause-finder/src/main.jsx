@@ -406,8 +406,8 @@ function AnswerPanel({ answer }) {
       <p>{answer.summary}</p>
       {Array.isArray(answer.bestFitCitations) && answer.bestFitCitations.length > 0 && (
         <div className="version-row">
-          {answer.bestFitCitations.map((citation) => (
-            <span className="version" key={citation}>
+          {answer.bestFitCitations.map((citation, index) => (
+            <span className="version" key={`${citation}-${index}`}>
               {citation}
             </span>
           ))}

@@ -120,6 +120,11 @@ npm run build
 
 The backend test suite includes smoke checks and an interim deterministic accuracy set. The stored benchmark is intentionally labeled partial until a practitioner-reviewed gold set is built.
 
+The Playwright E2E harness runs the public Vite interface against the real local
+search service and committed rule index. It covers exactly 10 user-behavior and
+10 adversarial categories without OpenAI or Neon credentials. Run `npm run
+test:ci`; see `E2E-TEST-REPORT.md` for the category ledger and evidence.
+
 ## API
 
 ```http
