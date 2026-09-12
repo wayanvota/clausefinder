@@ -35,8 +35,7 @@ security headers, and export workflow remain active.
 
 ## Verification record
 
-Status: local gate passed on 2026-09-11. GitHub Actions verification is pending
-the branch push.
+Status: local gate and GitHub Actions run 34663997789 passed on 2026-09-11.
 
 - Backend checks: 2 HTML unit tests, smoke test, and 11-case deterministic
   retrieval benchmark passed.
