@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -29,7 +29,7 @@ services:
     name: wayan-clause-finder
     runtime: static
     rootDir: wayan.com/clause-finder
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite
